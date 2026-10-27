@@ -29,22 +29,35 @@ const USER_STORAGE_KEY = 'finora_user';
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window === 'undefined') return DEFAULT_USER;
-    try {
-      const stored = localStorage.getItem(USER_STORAGE_KEY) || localStorage.getItem('pryma_user');
-      if (stored) {
-        return JSON.parse(stored);
-      }
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(DEFAULT_USER));
-      return DEFAULT_USER;
-    } catch {
-      return DEFAULT_USER;
-    }
-  });
+  const [user, setUser] = useState<User | null>(DEFAULT_USER);
   const [isLoading] = useState(false);
 
   useEffect(() => {
+    // 1. First sync from lowdb backend
+    fetch('/api/user')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.user) {
+          setUser(data.user);
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
+        }
+      })
+      .catch(() => {
+        // 2. Fall back to local storage
+        try {
+          const stored = localStorage.getItem(USER_STORAGE_KEY) || localStorage.getItem('pryma_user');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.email && parsed.email.includes('pryma.finance')) {
+              parsed.email = parsed.email.replace('pryma.finance', 'finora.finance');
+            }
+            setUser(parsed);
+          }
+        } catch {
+          // ignore
+        }
+      });
+
     const handleStorage = (e: StorageEvent) => {
       if (e.key === USER_STORAGE_KEY && e.newValue) {
         try {
@@ -110,6 +123,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const updated = { ...user, ...data };
     setUser(updated);
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated));
+    fetch('/api/user', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).catch(() => {});
   };
 
   return (

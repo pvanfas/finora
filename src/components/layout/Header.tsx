@@ -27,7 +27,16 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
       className="main-header"
     >
       {/* Left: Mobile hamburger & Search Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, maxWidth: '440px' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          flex: 1,
+          maxWidth: '680px',
+        }}
+        className="header-search-container"
+      >
         <button
           onClick={onOpenMobileMenu}
           className="mobile-hamburger-btn"
@@ -39,6 +48,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
             borderRadius: '12px',
             color: '#111827',
             cursor: 'pointer',
+            flexShrink: 0,
           }}
           aria-label="Toggle navigation menu"
         >
@@ -105,21 +115,25 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
       </div>
 
       {/* Right Action Buttons */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }} className="header-actions">
         <Button
           variant="primary"
           onClick={() => setIsAddTransactionOpen(true)}
           leftIcon={<Plus size={16} strokeWidth={2.5} />}
+          className="header-action-btn"
+          aria-label="Add Expense"
         >
-          <span className="btn-text">Add Expense</span>
+          <span className="header-btn-text">Add Expense</span>
         </Button>
 
         <Button
           variant="outline"
           onClick={() => setIsCustomizeOpen(true)}
           leftIcon={<LayoutGrid size={16} strokeWidth={2} />}
+          className="header-action-btn"
+          aria-label="Customize"
         >
-          <span>Customize</span>
+          <span className="header-btn-text">Customize</span>
         </Button>
       </div>
     </header>

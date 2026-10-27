@@ -10,28 +10,19 @@ export default function InsightsPage() {
   return (
     <DashboardShell>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>
-            Financial Insights & Predictive AI
-          </h1>
-          <p style={{ fontSize: '14px', color: '#6B7280', marginTop: '4px' }}>
-            Algorithmic patterns, merchant analysis, and projected month-end balance.
-          </p>
+        <div className="page-header-responsive">
+          <div>
+            <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>
+              Financial Insights & Predictive AI
+            </h1>
+            <p style={{ fontSize: '14px', color: '#6B7280', marginTop: '4px' }}>
+              Algorithmic patterns, merchant analysis, and projected month-end balance.
+            </p>
+          </div>
         </div>
 
         {/* AI Highlight Banner */}
-        <div
-          style={{
-            background: 'linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%)',
-            borderRadius: '16px',
-            padding: '24px 28px',
-            color: '#FFFFFF',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            boxShadow: 'var(--primary-accent-glow)',
-          }}
-        >
+        <div className="insights-ai-banner">
           <div style={{ maxWidth: '640px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               <Sparkles size={16} /> Intelligent Forecast
@@ -52,13 +43,14 @@ export default function InsightsPage() {
               fontWeight: 700,
               fontSize: '13.5px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              flexShrink: 0,
             }}
           >
             Apply Savings Rule
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.45fr) minmax(0, 1fr)', gap: '20px' }}>
+        <div className="middle-charts-grid responsive-two-col-grid">
           <SpendingTrend />
           <SpendingBreakdown />
         </div>

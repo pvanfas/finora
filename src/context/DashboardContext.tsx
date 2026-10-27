@@ -89,6 +89,30 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     applyThemeToDOM(accentTheme);
   }, [accentTheme]);
 
+  // Sync data from lowdb backend on mount
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/data')
+      .then((res) => res.json())
+      .then((res) => {
+        if (isMounted && res.success && res.data) {
+          if (Array.isArray(res.data.transactions)) {
+            setTransactions(res.data.transactions);
+          }
+          if (typeof res.data.settings?.monthlyBudget === 'number') {
+            setMonthlyBudget(res.data.settings.monthlyBudget);
+          }
+        }
+      })
+      .catch(() => {
+        // Fall back gracefully to local default data
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const setAccentTheme = (themeId: string) => {
     const found = ACCENT_THEMES.find((t) => t.id === themeId);
     if (!found) return;
@@ -145,11 +169,26 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       id,
       category: newTx.category as Transaction['category'],
     };
+    // Optimistic UI update
     setTransactions((prev) => [tx, ...prev]);
+
+    // Persist to lowdb backend
+    fetch('/api/transactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tx),
+    }).catch(() => {});
   };
 
   const updateBudget = (newBudget: number) => {
     setMonthlyBudget(newBudget);
+
+    // Persist to lowdb backend
+    fetch('/api/budget', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ monthlyBudget: newBudget }),
+    }).catch(() => {});
   };
 
   return (

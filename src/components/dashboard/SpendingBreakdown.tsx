@@ -47,10 +47,10 @@ export function SpendingBreakdown() {
     const startRad = (startAngle * Math.PI) / 180;
     const endRad = (endAngle * Math.PI) / 180;
 
-    const x1 = cx + radius * Math.cos(startRad);
-    const y1 = cy + radius * Math.sin(startRad);
-    const x2 = cx + radius * Math.cos(endRad);
-    const y2 = cy + radius * Math.sin(endRad);
+    const x1 = (cx + radius * Math.cos(startRad)).toFixed(2);
+    const y1 = (cy + radius * Math.sin(startRad)).toFixed(2);
+    const x2 = (cx + radius * Math.cos(endRad)).toFixed(2);
+    const y2 = (cy + radius * Math.sin(endRad)).toFixed(2);
 
     const largeArcFlag = sweep > 180 ? 1 : 0;
     const pathD = `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`;

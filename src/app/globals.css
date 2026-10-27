@@ -256,12 +256,45 @@ input, select, textarea {
 }
 
 .middle-charts-grid,
-.bottom-tables-grid {
+.bottom-tables-grid,
+.responsive-two-col-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
   gap: 20px;
   align-items: stretch;
   width: 100%;
+}
+
+.page-header-responsive {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+}
+
+.insights-ai-banner {
+  background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%);
+  border-radius: 16px;
+  padding: 24px 28px;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--primary-accent-glow);
+  gap: 18px;
+}
+
+.report-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #ECEEF2;
+  background-color: #FAFAFC;
+  gap: 12px;
 }
 
 /* Recent Transaction & Budget Plan Responsiveness */
@@ -336,7 +369,8 @@ input, select, textarea {
 /* Tablets (<= 1100px): Stack Middle and Bottom rows into single column */
 @media (max-width: 1100px) {
   .middle-charts-grid,
-  .bottom-tables-grid {
+  .bottom-tables-grid,
+  .responsive-two-col-grid {
     grid-template-columns: 1fr !important;
   }
 }
@@ -386,6 +420,19 @@ input, select, textarea {
   .main-content-container {
     padding: 6px 12px 24px 12px !important;
   }
+
+  .insights-ai-banner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 20px 18px !important;
+    gap: 14px !important;
+  }
+
+  .insights-ai-banner button {
+    width: 100% !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
 }
 
 /* Mobile Phones (<= 680px): Switch table to mobile card view */
@@ -401,11 +448,25 @@ input, select, textarea {
   .card-header-responsive {
     flex-direction: column !important;
     align-items: stretch !important;
+    gap: 10px !important;
   }
 
   .card-header-actions {
     justify-content: flex-start !important;
     width: 100% !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .report-item-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .report-item-row .report-download-btn {
+    width: 100% !important;
+    justify-content: center !important;
   }
 }
 
@@ -416,8 +477,45 @@ input, select, textarea {
     gap: 12px !important;
   }
 
-  .btn-text {
+  .btn-text,
+  .header-btn-text {
     display: none !important;
+  }
+
+  .header-action-btn {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    padding: 0 !important;
+    border-radius: 9999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .header-action-btn span {
+    display: none !important;
+  }
+
+  .header-action-btn svg {
+    margin: 0 !important;
+  }
+
+  .header-search-container {
+    max-width: 100% !important;
+  }
+
+  .page-header-responsive {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .page-header-responsive button {
+    width: 100% !important;
+    justify-content: center !important;
   }
 
   .auth-hero-banner {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { Button } from '@/components/ui';
 import { AlertTriangle, CheckCircle, Info, Check } from 'lucide-react';
@@ -33,8 +33,24 @@ export default function NotificationsPage() {
     },
   ]);
 
+  useEffect(() => {
+    fetch('/api/notifications')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.notifications)) {
+          setAlerts(data.notifications);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const markAllRead = () => {
-    setAlerts(prev => prev.map(a => ({ ...a, unread: false })));
+    setAlerts((prev) => prev.map((a) => ({ ...a, unread: false })));
+    fetch('/api/notifications', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ markAllRead: true }),
+    }).catch(() => {});
   };
 
   return (

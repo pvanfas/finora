@@ -17,7 +17,7 @@ export default function ReportsPage() {
   return (
     <DashboardShell>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="page-header-responsive">
           <div>
             <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>
               Financial Reports & Statements
@@ -28,13 +28,13 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: '20px' }}>
+        <div className="responsive-two-col-grid">
           {/* Reports List */}
           <div
+            className="dashboard-card"
             style={{
               backgroundColor: '#FFFFFF',
               borderRadius: '16px',
-              padding: '24px 28px',
               border: '1px solid #ECEEF2',
             }}
           >
@@ -46,17 +46,9 @@ export default function ReportsPage() {
               {reports.map((r, i) => (
                 <div
                   key={i}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '14px 16px',
-                    borderRadius: '12px',
-                    border: '1px solid #ECEEF2',
-                    backgroundColor: '#FAFAFC',
-                  }}
+                  className="report-item-row"
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
                     <div
                       style={{
                         width: '38px',
@@ -67,12 +59,24 @@ export default function ReportsPage() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        flexShrink: 0,
                       }}
                     >
                       <FileText size={18} />
                     </div>
-                    <div>
-                      <div style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>{r.title}</div>
+                    <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#111827',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {r.title}
+                      </div>
                       <div style={{ fontSize: '12px', color: '#8A92A6', marginTop: '2px' }}>
                         {r.date} &bull; {r.size}
                       </div>
@@ -84,6 +88,7 @@ export default function ReportsPage() {
                     size="sm"
                     pill={false}
                     leftIcon={<Download size={14} />}
+                    className="report-download-btn"
                   >
                     PDF
                   </Button>

@@ -51,10 +51,10 @@ export default function ProfilePage() {
             />
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#111827' }}>{user?.name || 'Alex Morgan'}</h2>
+                <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#111827' }} suppressHydrationWarning>{user?.name || 'Alex Morgan'}</h2>
                 <Badge variant="completed">Verified</Badge>
               </div>
-              <p style={{ fontSize: '14px', color: '#6B7280', marginTop: '2px' }}>{user?.email || 'alex.morgan@finora.finance'}</p>
+              <p style={{ fontSize: '14px', color: '#6B7280', marginTop: '2px' }} suppressHydrationWarning>{user?.email || 'alex.morgan@finora.finance'}</p>
               <div style={{ fontSize: '12.5px', color: '#8A92A6', marginTop: '6px' }}>
                 Tier: <strong style={{ color: 'var(--primary-accent)' }}>{user?.role || 'Personal Pro'}</strong> &bull; Member since Aug 2024
               </div>

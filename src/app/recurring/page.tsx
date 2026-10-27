@@ -1,18 +1,29 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { Calendar, Plus } from 'lucide-react';
 import { Button, Badge } from '@/components/ui';
 
 export default function RecurringPage() {
-  const subscriptions = [
-    { name: 'Netflix Premium 4K', category: 'Entertainment', amount: 19.99, date: 'Renews Sep 28', status: 'Active' },
-    { name: 'Shopify Store Plan', category: 'Business / Shopping', amount: 39.00, date: 'Renews Sep 27', status: 'Active' },
-    { name: 'Spotify Duo', category: 'Entertainment', amount: 14.99, date: 'Renews Sep 15', status: 'Active' },
-    { name: 'Gym & Fitness Pass', category: 'Health', amount: 65.00, date: 'Renews Sep 01', status: 'Active' },
-    { name: 'iCloud 2TB Storage', category: 'Cloud & Tech', amount: 9.99, date: 'Renews Sep 05', status: 'Active' },
-  ];
+  const [subscriptions, setSubscriptions] = useState([
+    { id: 'sub-1', name: 'Netflix Premium 4K', category: 'Entertainment', amount: 19.99, date: 'Renews Sep 28', status: 'Active' },
+    { id: 'sub-2', name: 'Shopify Store Plan', category: 'Business / Shopping', amount: 39.00, date: 'Renews Sep 27', status: 'Active' },
+    { id: 'sub-3', name: 'Spotify Duo', category: 'Entertainment', amount: 14.99, date: 'Renews Sep 15', status: 'Active' },
+    { id: 'sub-4', name: 'Gym & Fitness Pass', category: 'Health', amount: 65.00, date: 'Renews Sep 01', status: 'Active' },
+    { id: 'sub-5', name: 'iCloud 2TB Storage', category: 'Cloud & Tech', amount: 9.99, date: 'Renews Sep 05', status: 'Active' },
+  ]);
+
+  useEffect(() => {
+    fetch('/api/subscriptions')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.subscriptions)) {
+          setSubscriptions(data.subscriptions);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <DashboardShell>

@@ -14,7 +14,7 @@ export default function BudgetPage() {
   return (
     <DashboardShell>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <div className="page-header-responsive">
           <div>
             <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>
               Budget Management
@@ -34,15 +34,15 @@ export default function BudgetPage() {
 
         <StatCards />
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: '20px' }}>
+        <div className="responsive-two-col-grid">
           <BudgetPlan />
 
           {/* Budget Insights Card */}
           <div
+            className="dashboard-card"
             style={{
               backgroundColor: '#FFFFFF',
               borderRadius: '16px',
-              padding: '24px 28px',
               border: '1px solid #ECEEF2',
               display: 'flex',
               flexDirection: 'column',
