@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { MobileBottomNav } from './MobileBottomNav';
 import { CustomizeModal } from '../modals/CustomizeModal';
 import { AddTransactionModal } from '../modals/AddTransactionModal';
 
@@ -50,6 +51,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       {/* Modals */}
       <CustomizeModal />
       <AddTransactionModal />
+
+      {/* Mobile App Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   );
 }

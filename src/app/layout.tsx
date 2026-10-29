@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { DashboardProvider } from '@/context/DashboardContext';
+import { getInitialDashboardData, InitialDashboardData } from '@/lib/db';
+
 
 export const metadata: Metadata = {
   title: 'Finora — Smart Personal Finance & Budget Dashboard',
@@ -13,11 +15,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  let initialData: InitialDashboardData | null = null;
+  try {
+    initialData = await getInitialDashboardData();
+  } catch (err) {
+    console.error('RSC server pre-fetch fallback:', err);
+  }
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -28,7 +36,7 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('finora_accent') || localStorage.getItem('pryma_accent');
+                  var theme = localStorage.getItem('finora_accent');
                   var themes = {
                     orange: { p: '#FF5C16', h: '#E84D0A', l: '#FFF2EC', b: 'rgba(255, 92, 22, 0.25)' },
                     violet: { p: '#8B5CF6', h: '#7C3AED', l: '#F5F3FF', b: 'rgba(139, 92, 246, 0.25)' },
@@ -57,7 +65,7 @@ export default function RootLayout({
       </head>
       <body>
         <AuthProvider>
-          <DashboardProvider>
+          <DashboardProvider initialData={initialData}>
             {children}
           </DashboardProvider>
         </AuthProvider>

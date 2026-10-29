@@ -1,57 +1,76 @@
 'use client';
 
 import React from 'react';
-import { CreditCard, ArrowDownRight, Wallet, PiggyBank } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Wallet } from 'lucide-react';
 import { useDashboard } from '@/context/DashboardContext';
 import { ProgressBar } from '@/components/ui';
 import { formatINR } from '@/lib/formatters';
 
 export function StatCards() {
-  const { monthlyBudget, spent, remaining, savings, savingsGrowth } = useDashboard();
+  const { transactions } = useDashboard();
 
-  const spentPercent = Math.min(100, Math.round((spent / monthlyBudget) * 100));
-  const remainingPercent = Math.min(100, Math.round((remaining / monthlyBudget) * 100));
+  // Compute live aggregates from authentic database transactions
+  const totalIncome = transactions
+    .filter((t) => t.amount > 0)
+    .reduce((acc, curr) => acc + curr.amount, 0);
+
+  const totalExpense = transactions
+    .filter((t) => t.amount < 0)
+    .reduce((acc, curr) => acc + Math.abs(curr.amount), 0);
+
+  const incomeTxCount = transactions.filter((t) => t.amount > 0).length;
+  const expenseTxCount = transactions.filter((t) => t.amount < 0).length;
+
+  const projectRevenue = transactions
+    .filter((t) => t.category === 'PROJECT' && t.amount > 0)
+    .reduce((acc, curr) => acc + curr.amount, 0);
+
+  const netBalance = totalIncome - totalExpense;
+  const isPositiveBalance = netBalance >= 0;
+  const projectPct = totalIncome > 0 ? Math.round((projectRevenue / totalIncome) * 100) : 0;
+  const expenseRatio = totalIncome > 0 ? Math.min(100, Math.round((totalExpense / totalIncome) * 100)) : 100;
+  const balancePct = totalIncome > 0 ? Math.min(100, Math.round((Math.abs(netBalance) / totalIncome) * 100)) : 0;
 
   const stats = [
     {
-      id: 'monthly-budget',
-      title: 'Monthly Budget',
-      icon: CreditCard,
-      value: formatINR(monthlyBudget),
-      subtext: `of ${formatINR(monthlyBudget)}`,
+      id: 'total-income',
+      title: 'Total Income',
+      icon: ArrowDownRight,
+      value: formatINR(totalIncome),
+      subtext: `${incomeTxCount} credits logged`,
       percentage: 100,
       percentageLabel: '100%',
-      barColor: 'var(--primary-accent)',
+      barColor: '#10B981',
     },
     {
-      id: 'spent',
-      title: 'Spent',
-      icon: ArrowDownRight,
-      value: formatINR(spent),
-      subtext: `${spentPercent}% of budget`,
-      percentage: spentPercent,
-      percentageLabel: `${spentPercent}%`,
-      barColor: 'var(--primary-accent-muted)',
+      id: 'total-expenses',
+      title: 'Total Expenses',
+      icon: ArrowUpRight,
+      value: formatINR(totalExpense),
+      subtext: `${expenseTxCount} debits logged`,
+      percentage: expenseRatio,
+      percentageLabel: `${expenseRatio}%`,
+      barColor: '#DC2626',
     },
     {
-      id: 'remaining',
-      title: 'Remaining',
+      id: 'balance',
+      title: 'Balance',
+      icon: isPositiveBalance ? ArrowDownRight : ArrowUpRight,
+      value: formatINR(netBalance, { showSign: true }),
+      subtext: isPositiveBalance ? 'Net surplus reserve' : 'Net cash deficit',
+      percentage: balancePct,
+      percentageLabel: `${balancePct}%`,
+      barColor: isPositiveBalance ? '#10B981' : '#DC2626',
+    },
+    {
+      id: 'project-revenue',
+      title: 'Project Revenue',
       icon: Wallet,
-      value: formatINR(remaining),
-      subtext: `${remainingPercent}% left`,
-      percentage: remainingPercent,
-      percentageLabel: `${remainingPercent}%`,
+      value: formatINR(projectRevenue),
+      subtext: `${projectPct}% service revenue`,
+      percentage: projectPct,
+      percentageLabel: `${projectPct}%`,
       barColor: '#EE6CE7',
-    },
-    {
-      id: 'savings',
-      title: 'Savings',
-      icon: PiggyBank,
-      value: formatINR(savings),
-      subtext: `+${savingsGrowth}% from last month`,
-      percentage: savingsGrowth,
-      percentageLabel: `${savingsGrowth}%`,
-      barColor: '#85E0A3',
     },
   ];
 
@@ -81,19 +100,19 @@ export function StatCards() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div
                 style={{
-                  color: '#6B7280',
+                  color: stat.barColor || '#6B7280',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Icon size={17} strokeWidth={1.8} />
+                <Icon size={17} strokeWidth={2} />
               </div>
               <span
                 style={{
                   fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#4B5563',
+                  fontWeight: 600,
+                  color: stat.id === 'balance' ? stat.barColor : stat.id === 'total-expenses' ? '#DC2626' : stat.id === 'total-income' ? '#10B981' : '#4B5563',
                   letterSpacing: '-0.01em',
                 }}
               >
@@ -143,7 +162,7 @@ export function StatCards() {
                 style={{
                   fontSize: '12.5px',
                   fontWeight: 600,
-                  color: '#111827',
+                  color: stat.id === 'balance' ? stat.barColor : stat.id === 'total-expenses' ? '#DC2626' : stat.id === 'total-income' ? '#10B981' : '#111827',
                   minWidth: '38px',
                   textAlign: 'right',
                 }}

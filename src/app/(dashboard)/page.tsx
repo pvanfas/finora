@@ -6,7 +6,6 @@ import { StatCards } from '@/components/dashboard/StatCards';
 import { SpendingTrend } from '@/components/dashboard/SpendingTrend';
 import { SpendingBreakdown } from '@/components/dashboard/SpendingBreakdown';
 import { RecentTransactions } from '@/components/dashboard/RecentTransactions';
-import { BudgetPlan } from '@/components/dashboard/BudgetPlan';
 
 export default function DashboardPage() {
   return (
@@ -21,10 +20,9 @@ export default function DashboardPage() {
           <SpendingBreakdown />
         </div>
 
-        {/* Row 3: Recent Transactions + My Budget Plan */}
-        <div className="bottom-tables-grid">
+        {/* Row 3: Recent Transactions */}
+        <div>
           <RecentTransactions />
-          <BudgetPlan />
         </div>
       </div>
     </DashboardShell>

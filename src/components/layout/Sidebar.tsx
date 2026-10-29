@@ -89,6 +89,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             {MAIN_NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
+              const isExpenseNav = item.href === '/expenses';
+              const isIncomeNav = item.href === '/incomes';
+
+              const activeColor = isExpenseNav
+                ? '#DC2626'
+                : isIncomeNav
+                ? '#10B981'
+                : '#111827';
+
+              const activeBg = isExpenseNav
+                ? '#FEF2F2'
+                : isIncomeNav
+                ? '#ECFDF5'
+                : '#ECEEF2';
 
               return (
                 <Link
@@ -101,8 +115,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     gap: '14px',
                     padding: '11px 16px',
                     borderRadius: '9999px',
-                    color: isActive ? '#111827' : '#5E6676',
-                    backgroundColor: isActive ? '#ECEEF2' : 'transparent',
+                    color: isActive ? activeColor : '#5E6676',
+                    backgroundColor: isActive ? activeBg : 'transparent',
                     fontWeight: isActive ? 600 : 500,
                     fontSize: '14.5px',
                     transition: 'all 0.15s ease',
@@ -110,8 +124,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
-                      e.currentTarget.style.backgroundColor = '#F6F7FA';
-                      e.currentTarget.style.color = '#111827';
+                      e.currentTarget.style.backgroundColor = isExpenseNav ? '#FEF2F2' : isIncomeNav ? '#ECFDF5' : '#F6F7FA';
+                      e.currentTarget.style.color = isExpenseNav ? '#DC2626' : isIncomeNav ? '#10B981' : '#111827';
                     }
                   }}
                   onMouseLeave={(e) => {
@@ -125,7 +139,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     size={19}
                     strokeWidth={isActive ? 2.2 : 1.8}
                     style={{
-                      color: isActive ? '#111827' : '#737C8D',
+                      color: isActive ? activeColor : '#737C8D',
                       flexShrink: 0,
                     }}
                   />

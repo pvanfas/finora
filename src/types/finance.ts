@@ -1,25 +1,30 @@
 export type TransactionCategory =
-  | 'Food & Dining'
-  | 'Entertainment'
-  | 'Shopping'
-  | 'Transport'
-  | 'Utilities & Bills'
-  | 'Housing & Rent'
-  | 'Healthcare'
-  | 'Education'
-  | 'Investments'
-  | 'Others';
+  | 'OPEX'
+  | 'CAPEX'
+  | 'PROJECT'
+  | 'CONTRIBUTION';
 
-export type TransactionStatus = 'Completed' | 'Pending' | 'Failed';
+
+export interface AccountOption {
+  id?: number;
+  type: string;
+  code: string;
+  name: string;
+  accountLabel?: string;
+  category: TransactionCategory;
+}
 
 export interface Transaction {
   id: string;
   name: string;
+  title?: string;
   category: TransactionCategory;
   amount: number; // Negative for debits/expenses, positive for credits/income
-  status: TransactionStatus;
   date: string;
+  transactionDate?: string;
+  account?: string;
   paymentMethod?: string;
+  remarks?: string;
 }
 
 export interface BudgetCategory {

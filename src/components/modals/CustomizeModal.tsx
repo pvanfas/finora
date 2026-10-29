@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Check, DollarSign, Layout, Palette, Sparkles } from 'lucide-react';
+import { Check, Layout, Palette, Sparkles } from 'lucide-react';
 import { useDashboard } from '@/context/DashboardContext';
 import { ACCENT_THEMES } from '@/constants/theme';
 import { Modal, Button } from '@/components/ui';
@@ -10,36 +10,18 @@ export function CustomizeModal() {
   const {
     isCustomizeOpen,
     setIsCustomizeOpen,
-    monthlyBudget,
-    updateBudget,
     accentTheme,
     setAccentTheme,
-    currencySymbol,
   } = useDashboard();
 
-  const [budgetInput, setBudgetInput] = useState(monthlyBudget.toString());
-  const [activeTab, setActiveTab] = useState<'budget' | 'widgets' | 'appearance'>('budget');
-  const [savedSuccess, setSavedSuccess] = useState(false);
-
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    const val = parseFloat(budgetInput);
-    if (!isNaN(val) && val > 0) {
-      updateBudget(val);
-      setSavedSuccess(true);
-      setTimeout(() => {
-        setSavedSuccess(false);
-        setIsCustomizeOpen(false);
-      }, 700);
-    }
-  };
+  const [activeTab, setActiveTab] = useState<'appearance' | 'widgets'>('appearance');
 
   return (
     <Modal
       isOpen={isCustomizeOpen}
       onClose={() => setIsCustomizeOpen(false)}
       title="Customize Dashboard"
-      description="Tailor your dashboard view, accent theme & budget targets"
+      description="Tailor your dashboard view, accent theme & card layout"
       maxWidth="520px"
     >
       {/* Tab Navigation */}
@@ -54,7 +36,6 @@ export function CustomizeModal() {
         }}
       >
         {[
-          { id: 'budget' as const, label: 'Budget & Goals', icon: DollarSign },
           { id: 'appearance' as const, label: 'Theme & Accent', icon: Palette },
           { id: 'widgets' as const, label: 'Cards & Layout', icon: Layout },
         ].map((tab) => {
@@ -90,123 +71,6 @@ export function CustomizeModal() {
 
       {/* Body Content */}
       <div style={{ padding: '24px' }}>
-        {activeTab === 'budget' && (
-          <form onSubmit={handleSave}>
-            <div style={{ marginBottom: '20px' }}>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '13.5px',
-                  fontWeight: 600,
-                  color: '#374151',
-                  marginBottom: '8px',
-                }}
-              >
-                Monthly Budget Target ({currencySymbol})
-              </label>
-              <div style={{ position: 'relative' }}>
-                <span
-                  style={{
-                    position: 'absolute',
-                    left: '16px',
-                    top: '12px',
-                    color: '#9CA3AF',
-                    fontWeight: 700,
-                    fontSize: '15px',
-                  }}
-                >
-                  {currencySymbol}
-                </span>
-                <input
-                  type="number"
-                  value={budgetInput}
-                  onChange={(e) => setBudgetInput(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px 12px 34px',
-                    borderRadius: '12px',
-                    border: '1px solid #D1D5DB',
-                    fontSize: '15px',
-                    color: '#111827',
-                    fontWeight: 600,
-                    outline: 'none',
-                  }}
-                  placeholder="4500"
-                  required
-                />
-              </div>
-              <p style={{ fontSize: '12px', color: '#8A92A6', marginTop: '6px' }}>
-                Adjusting this updates your stat cards, progress meters, and spending thresholds automatically.
-              </p>
-            </div>
-
-            {/* Quick presets */}
-            <div style={{ marginBottom: '24px' }}>
-              <span
-                style={{
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: '#6B7280',
-                  display: 'block',
-                  marginBottom: '8px',
-                }}
-              >
-                Quick presets:
-              </span>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {[3000, 4500, 6000, 8000].map((preset) => (
-                  <button
-                    type="button"
-                    key={preset}
-                    onClick={() => setBudgetInput(preset.toString())}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '8px',
-                      backgroundColor:
-                        budgetInput === preset.toString()
-                          ? 'var(--primary-accent-light)'
-                          : '#F3F4F6',
-                      color:
-                        budgetInput === preset.toString()
-                          ? 'var(--primary-accent)'
-                          : '#4B5563',
-                      fontSize: '12.5px',
-                      fontWeight: 600,
-                      border:
-                        budgetInput === preset.toString()
-                          ? '1px solid var(--primary-accent)'
-                          : '1px solid transparent',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    {currencySymbol}
-                    {preset.toLocaleString('en-IN')}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsCustomizeOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" variant="primary">
-                {savedSuccess ? (
-                  <>
-                    <Check size={16} /> Saved!
-                  </>
-                ) : (
-                  'Save Preferences'
-                )}
-              </Button>
-            </div>
-          </form>
-        )}
 
         {activeTab === 'appearance' && (
           <div>
@@ -370,7 +234,7 @@ export function CustomizeModal() {
               { title: 'Stat Overview Cards', desc: 'Monthly Budget, Spent, Remaining, Savings' },
               { title: 'Spending Trend Chart', desc: 'Interactive daily spending bars and guideline' },
               { title: 'Spending Breakdown Gauge', desc: 'Semi-circular gauge of expenses by category' },
-              { title: 'Recent Transactions List', desc: 'Filterable table with status badges' },
+              { title: 'Recent Transactions List', desc: 'Filterable table with categories and search' },
               { title: 'My Budget Plan Progress', desc: 'Category-specific budgets and progress bars' },
             ].map((item, i) => (
               <div

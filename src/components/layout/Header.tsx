@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, LayoutGrid, Menu, Plus, X } from 'lucide-react';
+import { Search, LayoutGrid, Menu, ArrowDownRight, ArrowUpRight, X } from 'lucide-react';
 import { useDashboard } from '@/context/DashboardContext';
 import { Button } from '@/components/ui';
 
@@ -10,7 +10,7 @@ interface HeaderProps {
 }
 
 export function Header({ onOpenMobileMenu }: HeaderProps) {
-  const { searchQuery, setSearchQuery, setIsCustomizeOpen, setIsAddTransactionOpen } = useDashboard();
+  const { searchQuery, setSearchQuery, setIsCustomizeOpen, openAddTransaction } = useDashboard();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   return (
@@ -115,15 +115,39 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
       </div>
 
       {/* Right Action Buttons */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }} className="header-actions">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className="header-actions">
+        {/* Cash In Button */}
         <Button
-          variant="primary"
-          onClick={() => setIsAddTransactionOpen(true)}
-          leftIcon={<Plus size={16} strokeWidth={2.5} />}
+          onClick={() => openAddTransaction('income')}
+          leftIcon={<ArrowDownRight size={15} strokeWidth={2.5} />}
           className="header-action-btn"
-          aria-label="Add Expense"
+          aria-label="Cash In"
+          style={{
+            backgroundColor: '#10B981',
+            border: 'none',
+            color: '#FFFFFF',
+            boxShadow: '0 3px 12px rgba(16, 185, 129, 0.35)',
+            fontWeight: 600,
+          }}
         >
-          <span className="header-btn-text">Add Expense</span>
+          <span className="header-btn-text">Cash In</span>
+        </Button>
+
+        {/* Cash Out Button */}
+        <Button
+          onClick={() => openAddTransaction('expense')}
+          leftIcon={<ArrowUpRight size={15} strokeWidth={2.5} />}
+          className="header-action-btn"
+          aria-label="Cash Out"
+          style={{
+            backgroundColor: '#DC2626',
+            border: 'none',
+            color: '#FFFFFF',
+            boxShadow: '0 3px 12px rgba(220, 38, 38, 0.35)',
+            fontWeight: 600,
+          }}
+        >
+          <span className="header-btn-text">Cash Out</span>
         </Button>
 
         <Button

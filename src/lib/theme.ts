@@ -42,7 +42,7 @@ export function persistTheme(themeId: string): void {
 export function getInitialTheme(): AccentTheme {
   try {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(THEME_STORAGE_KEY) || localStorage.getItem('pryma_accent');
+      const stored = localStorage.getItem(THEME_STORAGE_KEY);
       if (stored) {
         const found = ACCENT_THEMES.find((t) => t.id === stored);
         if (found) return found;

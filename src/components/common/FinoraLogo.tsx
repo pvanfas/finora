@@ -88,6 +88,3 @@ export function FinoraLogo({
 
   return content;
 }
-
-// Backward compatibility alias
-export const PrymaLogo = FinoraLogo;
