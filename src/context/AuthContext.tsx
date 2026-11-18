@@ -64,6 +64,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           };
           setUser(mappedUser);
           localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mappedUser));
+          localStorage.removeItem(LOGGED_OUT_KEY);
+          setIsLoading(false);
+          return;
+        } else if (isMounted && sessionRes && !sessionRes.data?.user) {
+          // Explicitly no active session returned
+          setUser(null);
+          localStorage.removeItem(USER_STORAGE_KEY);
           setIsLoading(false);
           return;
         }
@@ -71,25 +78,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.warn('Neon Auth session check:', err);
       }
 
-      // Check stored user or profile
+      // Check stored user or profile (e.g. offline dev session)
       try {
         const stored = localStorage.getItem(USER_STORAGE_KEY);
         if (stored && isMounted) {
           setUser(JSON.parse(stored));
-        } else {
-          // Sync authenticated user from backend
-          const res = await fetch('/api/user');
-          const data = await res.json();
-          if (isMounted && data.success && data.user) {
-            setUser(data.user);
-            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
-          } else if (isMounted) {
-            setUser(DEFAULT_USER);
-            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(DEFAULT_USER));
-          }
+        } else if (isMounted) {
+          setUser(null);
         }
       } catch {
-        if (isMounted) setUser(DEFAULT_USER);
+        if (isMounted) setUser(null);
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -143,20 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.warn('Neon Auth sign in:', err);
     }
 
-    // Check against backend user profile
-    try {
-      const res = await fetch('/api/user');
-      const data = await res.json();
-      if (data.success && data.user && data.user.email?.toLowerCase() === email.toLowerCase()) {
-        setUser(data.user);
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
-        return { success: true };
-      }
-    } catch {
-      // ignore
-    }
-
-    // Generic fallback for valid password length
+    // Generic fallback for valid password length (e.g. offline dev environment)
     if (pass.length >= 6) {
       const loggedUser: User = {
         id: `usr_${Date.now()}`,

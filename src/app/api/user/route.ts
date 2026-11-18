@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getUser, updateUser } from '@/lib/db';
+import { auth } from '@/lib/auth/server';
 
 async function safeJson(request: Request): Promise<Record<string, unknown> | null> {
   try {
@@ -11,7 +12,16 @@ async function safeJson(request: Request): Promise<Record<string, unknown> | nul
 
 export async function GET() {
   try {
-    const user = await getUser();
+    const sessionRes = await auth.getSession().catch(() => null);
+    const sessionUser = sessionRes?.data?.user;
+    if (!sessionUser) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const user = await getUser(sessionUser.id || sessionUser.email);
     return NextResponse.json({ success: true, user });
   } catch (error) {
     console.error('GET /api/user error:', error);
@@ -24,6 +34,15 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    const sessionRes = await auth.getSession().catch(() => null);
+    const sessionUser = sessionRes?.data?.user;
+    if (!sessionUser) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await safeJson(request);
     if (!body) {
       return NextResponse.json(
@@ -32,7 +51,11 @@ export async function PUT(request: Request) {
       );
     }
 
-    const user = await updateUser(body as Parameters<typeof updateUser>[0]);
+    const user = await updateUser({
+      ...(body as Parameters<typeof updateUser>[0]),
+      id: sessionUser.id,
+      email: sessionUser.email,
+    });
     return NextResponse.json({ success: true, user });
   } catch (error) {
     console.error('PUT /api/user error:', error);
