@@ -14,14 +14,12 @@ const PUBLIC_PATHS = [
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public routes, auth API endpoints, and static assets
+  // Allow public routes, auth API endpoints, static assets, and files with extensions
   if (
     PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`)) ||
     pathname.startsWith('/api/auth') ||
     pathname.startsWith('/_next') ||
-    pathname === '/favicon.ico' ||
-    pathname === '/favicon.png' ||
-    pathname === '/icon.png'
+    /\.(?:ico|png|jpg|jpeg|svg|webp|gif|css|js|woff|woff2|ttf|eot)$/i.test(pathname)
   ) {
     return NextResponse.next();
   }
@@ -44,8 +42,8 @@ export const config = {
      * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico, favicon.png, icon.png
+     * - Static asset files with extensions (.png, .ico, .svg, etc.)
      */
-    '/((?!_next/static|_next/image|favicon\\.ico|favicon\\.png|icon\\.png).*)',
+    '/((?!_next/static|_next/image|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
   ],
 };

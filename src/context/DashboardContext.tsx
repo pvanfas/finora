@@ -17,6 +17,7 @@ import {
   ACCENT_THEMES,
 } from '@/constants';
 import { formatINR, parseTxDate, applyThemeToDOM, persistTheme, getInitialTheme } from '@/lib';
+import { useAuth } from '@/context/AuthContext';
 
 // Re-export for any legacy direct imports
 export { ACCENT_THEMES };
@@ -104,6 +105,7 @@ export function DashboardProvider({
   children: React.ReactNode;
   initialData?: InitialDashboardData | null;
 }) {
+  const { isAuthenticated } = useAuth();
   const [monthlyBudget, setMonthlyBudget] = useState(
     () => initialData?.settings?.monthlyBudget ?? DEFAULT_MONTHLY_BUDGET
   );
@@ -160,6 +162,7 @@ export function DashboardProvider({
   }
 
   const refreshAccounts = async () => {
+    if (!isAuthenticated) return;
     try {
       const res = await fetch('/api/accounts');
       if (!res.ok) {
@@ -209,8 +212,12 @@ export function DashboardProvider({
     applyThemeToDOM(accentTheme);
   }, [accentTheme]);
 
-  // Sync data from backend on mount (skips if already populated by RSC)
+  // Sync data from backend on mount (skips if already populated by RSC or unauthenticated)
   useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
     if (initialData && initialData.transactions.length > 0) {
       return;
     }
@@ -274,7 +281,7 @@ export function DashboardProvider({
     return () => {
       isMounted = false;
     };
-  }, [initialData]);
+  }, [initialData, isAuthenticated]);
 
   const setAccentTheme = (themeId: string) => {
     const found = ACCENT_THEMES.find((t) => t.id === themeId);
