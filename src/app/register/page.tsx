@@ -42,7 +42,7 @@ export default function RegisterPage() {
         }}
       >
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "20px" }}>
-          <FinoraLogo size="lg" />
+          <FinoraLogo size="lg" href="/login" />
         </div>
 
         <div

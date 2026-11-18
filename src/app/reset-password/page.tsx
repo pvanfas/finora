@@ -89,7 +89,7 @@ export default function ResetPasswordPage() {
         />
 
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <FinoraLogo size="md" variant="badge" />
+          <FinoraLogo size="lg" variant="on-dark" href="/login" />
         </div>
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '480px', margin: 'auto 0' }}>
@@ -173,7 +173,7 @@ export default function ResetPasswordPage() {
           ) : (
             <>
               <div style={{ marginBottom: '24px', textAlign: 'center' }}>
-                <FinoraLogo size="lg" />
+                <FinoraLogo size="lg" href="/login" />
                 <h2
                   style={{
                     fontSize: '22px',

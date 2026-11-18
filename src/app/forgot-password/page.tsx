@@ -59,6 +59,11 @@ export default function ForgotPasswordPage() {
           }}
         />
 
+        {/* Top Logo on Brand Banner */}
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <FinoraLogo size="lg" variant="on-dark" href="/login" />
+        </div>
+
         {/* Center Headline */}
         <div
           style={{
@@ -121,7 +126,7 @@ export default function ForgotPasswordPage() {
           }}
         >
           <div style={{ marginBottom: "28px" }}>
-            <FinoraLogo size="lg" />
+            <FinoraLogo size="lg" href="/login" />
           </div>
 
           {!isSubmitted ? (

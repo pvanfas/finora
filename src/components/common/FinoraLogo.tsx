@@ -21,9 +21,11 @@ export function FinoraLogo({
     lg: { height: 40, width: 155 },
   }[size];
 
+  const logoSrc = variant === 'on-dark' ? '/finora-white.png' : '/finora.png';
+
   const logoImage = (
     <Image
-      src="/finora.png"
+      src={logoSrc}
       alt="Finora"
       width={dimensions.width}
       height={dimensions.height}
@@ -39,7 +41,7 @@ export function FinoraLogo({
 
   let content: React.ReactNode;
 
-  if (variant === 'on-dark' || variant === 'badge') {
+  if (variant === 'badge') {
     content = (
       <div
         className={className}

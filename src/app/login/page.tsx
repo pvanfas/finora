@@ -82,6 +82,11 @@ export default function LoginPage() {
           }}
         />
 
+        {/* Top Logo on Brand Banner */}
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <FinoraLogo size="lg" variant="on-dark" href="/login" />
+        </div>
+
         {/* Center Headline */}
         <div
           style={{
@@ -145,7 +150,7 @@ export default function LoginPage() {
         >
           {/* Logo & Clean Heading */}
           <div style={{ marginBottom: "24px", textAlign: "center" }}>
-            <FinoraLogo size="lg" />
+            <FinoraLogo size="lg" href="/login" />
             <h2
               style={{
                 fontSize: "22px",
