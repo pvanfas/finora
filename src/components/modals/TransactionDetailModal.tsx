@@ -147,14 +147,14 @@ export function TransactionDetailModal({
       title={isEditing ? 'Edit Transaction' : 'Transaction Details'}
       maxWidth="500px"
     >
-      <div style={{ padding: '20px 24px' }}>
+      <div style={{ padding: '16px 20px' }}>
         {/* Subheader Toolbar with Edit & Delete Buttons */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: '18px',
+            marginBottom: '14px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -381,29 +381,29 @@ export function TransactionDetailModal({
             {/* Amount Hero Card */}
             <div
               style={{
-                padding: '20px',
-                borderRadius: '14px',
+                padding: '14px 18px',
+                borderRadius: '12px',
                 backgroundColor: isExpense ? '#FEF2F2' : '#ECFDF5',
                 border: isExpense ? '1px solid #FEE2E2' : '1px solid #D1FAE5',
                 textAlign: 'center',
-                marginBottom: '20px',
+                marginBottom: '14px',
               }}
             >
               <div
                 style={{
-                  fontSize: '12px',
+                  fontSize: '11px',
                   fontWeight: 600,
                   color: isExpense ? '#991B1B' : '#065F46',
                   textTransform: 'uppercase',
                   letterSpacing: '0.04em',
-                  marginBottom: '4px',
+                  marginBottom: '2px',
                 }}
               >
                 {isExpense ? 'Total Debit Amount' : 'Total Credit Amount'}
               </div>
               <div
                 style={{
-                  fontSize: '28px',
+                  fontSize: '24px',
                   fontWeight: 800,
                   letterSpacing: '-0.02em',
                   color: isExpense ? '#DC2626' : '#16A34A',
@@ -414,25 +414,25 @@ export function TransactionDetailModal({
             </div>
 
             {/* Transaction Title / Description */}
-            <div style={{ marginBottom: '18px' }}>
+            <div style={{ marginBottom: '14px' }}>
               <div
                 style={{
-                  fontSize: '11.5px',
+                  fontSize: '11px',
                   fontWeight: 700,
                   color: '#6B7280',
                   textTransform: 'uppercase',
                   letterSpacing: '0.04em',
-                  marginBottom: '5px',
+                  marginBottom: '4px',
                 }}
               >
                 Description / Memo
               </div>
               <div
                 style={{
-                  fontSize: '15px',
+                  fontSize: '14.5px',
                   fontWeight: 700,
                   color: '#111827',
-                  lineHeight: '1.4',
+                  lineHeight: '1.35',
                 }}
               >
                 {transaction.name}
@@ -444,15 +444,15 @@ export function TransactionDetailModal({
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '12px',
-                paddingTop: '16px',
+                gap: '10px',
+                paddingTop: '12px',
                 borderTop: '1px solid #F3F4F6',
               }}
             >
               {/* Date */}
               <div
                 style={{
-                  padding: '12px',
+                  padding: '10px 12px',
                   backgroundColor: '#F9FAFB',
                   borderRadius: '10px',
                   border: '1px solid #F3F4F6',
@@ -480,7 +480,7 @@ export function TransactionDetailModal({
               {/* Approval Status */}
               <div
                 style={{
-                  padding: '12px',
+                  padding: '10px 12px',
                   backgroundColor: transaction.is_approved ? '#F0FDF4' : '#FFFBEB',
                   borderRadius: '10px',
                   border: transaction.is_approved ? '1px solid #DCFCE7' : '1px solid #FEF3C7',
@@ -530,7 +530,7 @@ export function TransactionDetailModal({
               {/* Classification */}
               <div
                 style={{
-                  padding: '12px',
+                  padding: '10px 12px',
                   backgroundColor: '#F9FAFB',
                   borderRadius: '10px',
                   border: '1px solid #F3F4F6',
@@ -558,7 +558,7 @@ export function TransactionDetailModal({
               {/* Account */}
               <div
                 style={{
-                  padding: '12px',
+                  padding: '10px 12px',
                   backgroundColor: '#F9FAFB',
                   borderRadius: '10px',
                   border: '1px solid #F3F4F6',
@@ -596,7 +596,7 @@ export function TransactionDetailModal({
               {/* Payment Method */}
               <div
                 style={{
-                  padding: '12px',
+                  padding: '10px 12px',
                   backgroundColor: '#F9FAFB',
                   borderRadius: '10px',
                   border: '1px solid #F3F4F6',
@@ -634,8 +634,7 @@ export function TransactionDetailModal({
               {/* Transaction ID */}
               <div
                 style={{
-                  gridColumn: 'span 2',
-                  padding: '12px',
+                  padding: '10px 12px',
                   backgroundColor: '#F9FAFB',
                   borderRadius: '10px',
                   border: '1px solid #F3F4F6',
@@ -695,7 +694,7 @@ export function TransactionDetailModal({
               <div
                 style={{
                   gridColumn: 'span 2',
-                  padding: '12px',
+                  padding: '10px 12px',
                   backgroundColor: '#F9FAFB',
                   borderRadius: '10px',
                   border: '1px solid #F3F4F6',
@@ -721,7 +720,7 @@ export function TransactionDetailModal({
                     fontWeight: transaction.remarks ? 500 : 400,
                     color: transaction.remarks ? '#111827' : '#9CA3AF',
                     fontStyle: transaction.remarks ? 'normal' : 'italic',
-                    lineHeight: 1.45,
+                    lineHeight: 1.4,
                     wordBreak: 'break-word',
                   }}
                 >
@@ -733,7 +732,7 @@ export function TransactionDetailModal({
             {/* Footer Close Button */}
             <div
               style={{
-                marginTop: '24px',
+                marginTop: '16px',
                 display: 'flex',
                 justifyContent: 'flex-end',
               }}
@@ -752,7 +751,7 @@ export function TransactionDetailModal({
         ) : (
           /* Edit Mode Form */
           <form onSubmit={handleSave}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <Input
                 label="Description / Name"
                 value={editName}

@@ -13,6 +13,7 @@ export interface ModalProps {
   description?: string;
   children: React.ReactNode;
   maxWidth?: string;
+  maxHeight?: string;
   className?: string;
   isStatic?: boolean;
 }
@@ -24,6 +25,7 @@ export function Modal({
   description,
   children,
   maxWidth = '520px',
+  maxHeight = 'calc(100dvh - 40px)',
   className,
   isStatic = false,
 }: ModalProps) {
@@ -72,6 +74,7 @@ export function Modal({
           borderRadius: '20px',
           width: '100%',
           maxWidth,
+          maxHeight,
           boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
           border: '1px solid #ECEEF2',
           overflow: 'hidden',
@@ -89,6 +92,7 @@ export function Modal({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexShrink: 0,
           }}
         >
           <div>
@@ -112,6 +116,7 @@ export function Modal({
               backgroundColor: 'transparent',
               cursor: 'pointer',
               transition: 'color 0.15s ease',
+              flexShrink: 0,
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = '#111827')}
             onMouseLeave={(e) => (e.currentTarget.style.color = '#9CA3AF')}
@@ -121,8 +126,17 @@ export function Modal({
           </button>
         </div>
 
-        {/* Modal Body */}
-        {children}
+        {/* Modal Body with smooth internal scroll */}
+        <div
+          style={{
+            overflowY: 'auto',
+            flex: 1,
+            minHeight: 0,
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
