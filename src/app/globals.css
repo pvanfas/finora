@@ -853,6 +853,13 @@ input, select, textarea {
   }
 }
 
+@keyframes finora-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
 
 
 

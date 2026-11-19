@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { getTransactions, addTransaction, deleteTransaction, updateTransaction, getUser } from '@/lib/db';
 import { auth } from '@/lib/auth/server';
 
@@ -26,6 +27,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const sessionRes = await auth.getSession().catch(() => null);
+    if (!sessionRes?.data?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await safeJson(request);
     if (!body) {
       return NextResponse.json(
@@ -65,6 +71,10 @@ export async function POST(request: Request) {
       projectId: body.projectId !== undefined && body.projectId !== null ? Number(body.projectId) : undefined,
       projectName: body.projectName !== undefined && body.projectName !== null ? String(body.projectName).trim() : undefined,
     });
+
+    try {
+      revalidateTag('dashboard', 'seconds');
+    } catch {}
 
     return NextResponse.json({ success: true, transaction: newTx });
   } catch (error) {
@@ -139,6 +149,10 @@ export async function PUT(request: Request) {
       );
     }
 
+    try {
+      revalidateTag('dashboard', 'seconds');
+    } catch {}
+
     return NextResponse.json({ success: true, transaction: updated });
   } catch (error) {
     console.error('PUT /api/transactions error:', error);
@@ -151,6 +165,11 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const sessionRes = await auth.getSession().catch(() => null);
+    if (!sessionRes?.data?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Accept id from query string or JSON body
     const { searchParams } = new URL(request.url);
     let id: string | null = searchParams.get('id');
@@ -168,6 +187,11 @@ export async function DELETE(request: Request) {
     }
 
     await deleteTransaction(id);
+
+    try {
+      revalidateTag('dashboard', 'seconds');
+    } catch {}
+
     return NextResponse.json({ success: true, deletedId: id });
   } catch (error) {
     console.error('DELETE /api/transactions error:', error);

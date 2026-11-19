@@ -67,11 +67,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
               Loading your workspace…
             </span>
           </div>
-          <style>{`
-            @keyframes finora-spin {
-              to { transform: rotate(360deg); }
-            }
-          `}</style>
         </div>
       </>
     );

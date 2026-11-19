@@ -52,7 +52,6 @@ export function TransactionDetailModal({
   const [editCategory, setEditCategory] = useState<TransactionCategory>('OPEX');
   const [editAccount, setEditAccount] = useState('');
   const [editProjectId, setEditProjectId] = useState('');
-  const [editProjectName, setEditProjectName] = useState('');
   const [editPaymentMethod, setEditPaymentMethod] = useState('');
   const [editDate, setEditDate] = useState('');
   const [editRemarks, setEditRemarks] = useState('');
@@ -67,7 +66,6 @@ export function TransactionDetailModal({
     setEditCategory(transaction.category);
     setEditAccount(transaction.account || '');
     setEditProjectId(transaction.projectId ? String(transaction.projectId) : '');
-    setEditProjectName(transaction.projectName || '');
     setEditPaymentMethod(transaction.paymentMethod || 'Bank Transfer');
     setEditDate(transaction.date);
     setEditRemarks(transaction.remarks || '');
@@ -981,10 +979,7 @@ export function TransactionDetailModal({
                   <select
                     value={editProjectId}
                     onChange={(e) => {
-                      const pid = e.target.value;
-                      setEditProjectId(pid);
-                      const chosen = projects.find((p) => String(p.id) === pid);
-                      setEditProjectName(chosen ? chosen.name : '');
+                      setEditProjectId(e.target.value);
                     }}
                     style={{
                       width: '100%',

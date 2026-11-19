@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { DashboardProvider } from '@/context/DashboardContext';
-import { getInitialDashboardData, InitialDashboardData } from '@/lib/db';
 
 
 export const metadata: Metadata = {
@@ -15,17 +14,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  let initialData: InitialDashboardData | null = null;
-  try {
-    initialData = await getInitialDashboardData();
-  } catch (err) {
-    console.error('RSC server pre-fetch fallback:', err);
-  }
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -65,7 +58,7 @@ export default async function RootLayout({
       </head>
       <body>
         <AuthProvider>
-          <DashboardProvider initialData={initialData}>
+          <DashboardProvider initialData={null}>
             {children}
           </DashboardProvider>
         </AuthProvider>

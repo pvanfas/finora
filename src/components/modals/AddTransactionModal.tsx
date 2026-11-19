@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { Plus, ArrowUpRight, ArrowDownRight, FolderKanban, Sparkles } from "lucide-react";
 import { useDashboard } from "@/context/DashboardContext";
@@ -10,6 +10,9 @@ import { TransactionCategory } from "@/types";
 type EntryType = "expense" | "income";
 
 const getTodayDateInput = () => {
+  if (typeof window === "undefined") {
+    return "";
+  }
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -45,16 +48,13 @@ export function AddTransactionModal() {
   const [entryType, setEntryType] = useState<EntryType>("expense");
   const [name, setName] = useState("");
   const [transactionDate, setTransactionDate] = useState<string>("");
+  const displayDateValue = transactionDate || (typeof window !== "undefined" ? getTodayDateInput() : "");
   const [selectedAccount, setSelectedAccount] = useState<string>("");
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [category, setCategory] = useState<TransactionCategory>("OPEX");
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
   const [remarks, setRemarks] = useState("");
-
-  useEffect(() => {
-    setTransactionDate(getTodayDateInput());
-  }, []);
 
   const currentAccounts =
     entryType === "expense" ? expenseAccounts : incomeAccounts;
@@ -508,7 +508,7 @@ export function AddTransactionModal() {
             </label>
             <input
               type="date"
-              value={transactionDate}
+              value={displayDateValue}
               onChange={(e) => setTransactionDate(e.target.value)}
               required
               style={{

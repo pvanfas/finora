@@ -1,4 +1,5 @@
 import dns from 'node:dns';
+import { cacheLife, cacheTag } from 'next/cache';
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
 import {
   Transaction,
@@ -37,19 +38,28 @@ export interface DatabaseSchema {
   notifications: AppNotification[];
 }
 
-export function getSql() {
-  const connectionString = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
-  if (!connectionString) {
-    throw new Error('DATABASE_URL environment variable is missing.');
+let sqlClient: SqlClient | null = null;
+let fallbackSqlClient: SqlClient | null = null;
+
+export function getSql(): SqlClient {
+  if (!sqlClient) {
+    const connectionString = process.env.DATABASE_URL || process.env.DATABASE_URL_UNPOOLED;
+    if (!connectionString) {
+      throw new Error('DATABASE_URL environment variable is missing.');
+    }
+    sqlClient = neon(connectionString) as SqlClient;
   }
-  return neon(connectionString);
+  return sqlClient;
 }
 
 /** Fallback SQL client with stripped connection parameters for retry attempts */
-function getFallbackSql() {
-  const raw = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL || '';
-  const clean = raw.replace(/\?.*$/, ''); // strip query string params that may cause issues
-  return neon(clean);
+function getFallbackSql(): SqlClient {
+  if (!fallbackSqlClient) {
+    const raw = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL || '';
+    const clean = raw.replace(/\?.*$/, ''); // strip query string params that may cause issues
+    fallbackSqlClient = neon(clean) as SqlClient;
+  }
+  return fallbackSqlClient;
 }
 
 // Use a concrete alias for the sql client type to avoid generic mismatch
@@ -61,35 +71,41 @@ type SqlClient = NeonQueryFunction<false, false>;
  */
 async function withRetry<T>(operation: (sql: SqlClient) => Promise<T>): Promise<T> {
   try {
-    return await operation(getSql() as SqlClient);
+    return await operation(getSql());
   } catch (err) {
     const msg = (err as Error)?.message || String(err);
-    const isNetworkError = msg.includes('fetch failed') || msg.includes('connect') || msg.includes('ECONNREFUSED') || msg.includes('timeout');
+    if (msg.includes('During prerendering') || (err as { digest?: string })?.digest?.startsWith('NEXT_')) {
+      throw err;
+    }
+    const isNetworkError =
+      msg.includes('fetch failed') ||
+      msg.includes('ECONNREFUSED') ||
+      msg.includes('ETIMEDOUT') ||
+      msg.includes('NeonDbError: connect');
     if (isNetworkError) {
       console.warn('[DB] Transient connection error, retrying with fallback...', msg);
-      return await operation(getFallbackSql() as SqlClient);
+      return await operation(getFallbackSql());
     }
     throw err;
   }
 }
 
 export async function getUser(emailOrId?: string): Promise<User> {
-  const sql = getSql();
   let rows;
   if (emailOrId) {
-    rows = await sql`
+    rows = await withRetry((sql) => sql`
       SELECT id, name, email, image AS avatar, role
       FROM neon_auth.user
       WHERE id = ${emailOrId} OR email = ${emailOrId}
       LIMIT 1;
-    `;
+    `);
   } else {
-    rows = await sql`
+    rows = await withRetry((sql) => sql`
       SELECT id, name, email, image AS avatar, role
       FROM neon_auth.user
       ORDER BY "createdAt" ASC
       LIMIT 1;
-    `;
+    `);
   }
 
   if (rows.length === 0) {
@@ -114,7 +130,6 @@ export async function getUser(emailOrId?: string): Promise<User> {
 }
 
 export async function updateUser(data: Partial<User> & { id?: string; email?: string }): Promise<User> {
-  const sql = getSql();
   const current = await getUser(data.id || data.email);
   const updated: User = {
     ...current,
@@ -125,7 +140,7 @@ export async function updateUser(data: Partial<User> & { id?: string; email?: st
   const role = updated.role || 'user';
 
   if (updated.id) {
-    await sql`
+    await withRetry((sql) => sql`
       UPDATE neon_auth.user
       SET name = ${updated.name},
           email = ${updated.email},
@@ -133,7 +148,7 @@ export async function updateUser(data: Partial<User> & { id?: string; email?: st
           role = ${role},
           "updatedAt" = NOW()
       WHERE id = ${updated.id};
-    `;
+    `);
   }
 
   return updated;
@@ -289,12 +304,28 @@ export async function updateTransaction(
   };
 }
 
+function formatOrdinalDay(dateLabel: string): string {
+  const digits = dateLabel.replace(/[^\d]/g, '');
+  const dayNum = parseInt(digits, 10);
+  if (isNaN(dayNum)) return dateLabel;
+  if (dayNum >= 11 && dayNum <= 13) return `${dayNum}th`;
+  switch (dayNum % 10) {
+    case 1:
+      return `${dayNum}st`;
+    case 2:
+      return `${dayNum}nd`;
+    case 3:
+      return `${dayNum}rd`;
+    default:
+      return `${dayNum}th`;
+  }
+}
+
 export async function getTrendData(): Promise<DaySpending[]> {
-  const sql = getSql();
   // Compute trend from real transactions
-  const txs = await sql`
+  const txs = await withRetry((sql) => sql`
     SELECT transaction_date, amount FROM transactions WHERE amount < 0
-  `;
+  `);
   const dayMap = new Map<string, number>();
   for (const t of txs) {
     let label = t.transaction_date;
@@ -311,7 +342,7 @@ export async function getTrendData(): Promise<DaySpending[]> {
   const result: DaySpending[] = [];
   const entries = Array.from(dayMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   for (const [dateLabel, amount] of entries) {
-    const day = dateLabel.replace(/[^\d]/g, '') + 'th';
+    const day = formatOrdinalDay(dateLabel);
     result.push({ day, dateLabel, amount });
   }
 
@@ -575,6 +606,8 @@ export interface InitialDashboardData {
 
 export async function getInitialDashboardData(): Promise<InitialDashboardData> {
   'use cache';
+  cacheLife('seconds');
+  cacheTag('dashboard');
   try {
     const [data, expenseAccounts, incomeAccounts, projects] = await Promise.all([
       getAllData(),

@@ -51,8 +51,30 @@ export async function PUT(request: Request) {
       );
     }
 
+    const { name, avatar, role } = body as {
+      name?: string;
+      avatar?: string;
+      role?: string;
+    };
+
+    const payload: { name?: string; avatar?: string; role?: string } = {};
+    if (typeof name === 'string' && name.trim()) {
+      payload.name = name.trim();
+    }
+    if (typeof avatar === 'string' && avatar.trim()) {
+      payload.avatar = avatar.trim();
+    }
+
+    // Role cannot be self-modified by regular users
+    const callerIsAdmin =
+      sessionUser.email === 'admin@gmail.com' ||
+      (sessionUser as { role?: string }).role === 'admin';
+    if (callerIsAdmin && typeof role === 'string' && role.trim()) {
+      payload.role = role.trim();
+    }
+
     const user = await updateUser({
-      ...(body as Parameters<typeof updateUser>[0]),
+      ...payload,
       id: sessionUser.id,
       email: sessionUser.email,
     });

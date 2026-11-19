@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import {
   getProjects,
   createProject,
   updateProject,
   deleteProject,
 } from '@/lib/db';
+import { auth } from '@/lib/auth/server';
 
 async function safeJson(request: Request): Promise<Record<string, unknown> | null> {
   try {
@@ -14,8 +16,14 @@ async function safeJson(request: Request): Promise<Record<string, unknown> | nul
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    void request.url;
+    const sessionRes = await auth.getSession().catch(() => null);
+    if (!sessionRes?.data?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const projects = await getProjects();
     return NextResponse.json({
       success: true,
@@ -33,6 +41,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const sessionRes = await auth.getSession().catch(() => null);
+    if (!sessionRes?.data?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await safeJson(request);
     if (!body) {
       return NextResponse.json(
@@ -51,6 +64,9 @@ export async function POST(request: Request) {
     }
 
     const project = await createProject({ name: name.trim() });
+    try {
+      revalidateTag('dashboard', 'seconds');
+    } catch {}
     return NextResponse.json({ success: true, project }, { status: 201 });
   } catch (error) {
     console.error('POST /api/projects error:', error);
@@ -63,6 +79,11 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const sessionRes = await auth.getSession().catch(() => null);
+    if (!sessionRes?.data?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await safeJson(request);
     if (!body) {
       return NextResponse.json(
@@ -96,6 +117,10 @@ export async function PUT(request: Request) {
       );
     }
 
+    try {
+      revalidateTag('dashboard', 'seconds');
+    } catch {}
+
     return NextResponse.json({ success: true, project: updated });
   } catch (error) {
     console.error('PUT /api/projects error:', error);
@@ -108,6 +133,11 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const sessionRes = await auth.getSession().catch(() => null);
+    if (!sessionRes?.data?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     let idParam = searchParams.get('id');
 
@@ -125,6 +155,9 @@ export async function DELETE(request: Request) {
     }
 
     await deleteProject(numId);
+    try {
+      revalidateTag('dashboard', 'seconds');
+    } catch {}
     return NextResponse.json({ success: true, deletedId: numId });
   } catch (error) {
     console.error('DELETE /api/projects error:', error);

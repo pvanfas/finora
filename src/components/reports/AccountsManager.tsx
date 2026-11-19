@@ -6,15 +6,10 @@ import {
   Pencil,
   Trash2,
   Search,
-  Check,
   X,
   AlertCircle,
-  Tag,
-  Landmark,
-  Hash,
-  FileText,
 } from 'lucide-react';
-import { Modal, Button, Input } from '@/components/ui';
+import { Modal, Button } from '@/components/ui';
 import { useDashboard } from '@/context/DashboardContext';
 
 interface AccountItem {

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getNotifications, updateNotifications } from '@/lib/db';
+import { auth } from '@/lib/auth/server';
 
 async function safeJson(request: Request): Promise<Record<string, unknown> | null> {
   try {
@@ -9,8 +10,14 @@ async function safeJson(request: Request): Promise<Record<string, unknown> | nul
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    void request.url;
+    const sessionRes = await auth.getSession().catch(() => null);
+    if (!sessionRes?.data?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const notifications = await getNotifications();
     return NextResponse.json({ success: true, notifications });
   } catch (error) {
@@ -24,6 +31,11 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    const sessionRes = await auth.getSession().catch(() => null);
+    if (!sessionRes?.data?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await safeJson(request);
     if (!body) {
       return NextResponse.json(

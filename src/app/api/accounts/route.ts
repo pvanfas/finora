@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import {
   getExpenseAccounts,
   getIncomeAccounts,
@@ -10,6 +11,7 @@ import {
   updateIncomeAccount,
   deleteIncomeAccount,
 } from '@/lib/db';
+import { auth } from '@/lib/auth/server';
 
 async function safeJson(request: Request): Promise<Record<string, unknown> | null> {
   try {
@@ -58,6 +60,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const sessionRes = await auth.getSession().catch(() => null);
+    if (!sessionRes?.data?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await safeJson(request);
     if (!body) {
       return NextResponse.json(
@@ -77,9 +84,11 @@ export async function POST(request: Request) {
 
     if (category === 'INCOME') {
       const account = await createIncomeAccount({ type, code, name });
+      try { revalidateTag('dashboard', 'seconds'); } catch {}
       return NextResponse.json({ success: true, account });
     } else {
       const account = await createExpenseAccount({ type, code, name });
+      try { revalidateTag('dashboard', 'seconds'); } catch {}
       return NextResponse.json({ success: true, account });
     }
   } catch (error) {
@@ -101,6 +110,11 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const sessionRes = await auth.getSession().catch(() => null);
+    if (!sessionRes?.data?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await safeJson(request);
     if (!body) {
       return NextResponse.json(
@@ -133,6 +147,7 @@ export async function PUT(request: Request) {
           { status: 404 }
         );
       }
+      try { revalidateTag('dashboard', 'seconds'); } catch {}
       return NextResponse.json({ success: true, account: updated });
     } else {
       const updated = await updateExpenseAccount(numId, { type, code, name });
@@ -142,6 +157,7 @@ export async function PUT(request: Request) {
           { status: 404 }
         );
       }
+      try { revalidateTag('dashboard', 'seconds'); } catch {}
       return NextResponse.json({ success: true, account: updated });
     }
   } catch (error) {
@@ -162,6 +178,11 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const sessionRes = await auth.getSession().catch(() => null);
+    if (!sessionRes?.data?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     let idParam = searchParams.get('id');
     let categoryParam = searchParams.get('category');
@@ -182,6 +203,7 @@ export async function DELETE(request: Request) {
       );
     }
 
+    try { revalidateTag('dashboard', 'seconds'); } catch {}
     if (categoryParam?.toUpperCase() === 'INCOME') {
       await deleteIncomeAccount(numId);
       return NextResponse.json({ success: true, deletedId: numId, category: 'INCOME' });
