@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
-import { Plus, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Plus, ArrowUpRight, ArrowDownRight, FolderKanban, Sparkles } from "lucide-react";
 import { useDashboard } from "@/context/DashboardContext";
 import { Modal, Button, Input } from "@/components/ui";
 import { TransactionCategory } from "@/types";
@@ -39,12 +39,14 @@ export function AddTransactionModal() {
     currencySymbol,
     expenseAccounts,
     incomeAccounts,
+    projects,
   } = useDashboard();
 
   const [entryType, setEntryType] = useState<EntryType>("expense");
   const [name, setName] = useState("");
   const [transactionDate, setTransactionDate] = useState<string>("");
   const [selectedAccount, setSelectedAccount] = useState<string>("");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [category, setCategory] = useState<TransactionCategory>("OPEX");
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
@@ -57,8 +59,26 @@ export function AddTransactionModal() {
   const currentAccounts =
     entryType === "expense" ? expenseAccounts : incomeAccounts;
 
+  const isProjectRevenue = useMemo(() => {
+    const found = currentAccounts.find(
+      (a) => `${a.type}-${a.code}` === selectedAccount,
+    );
+    if (found) {
+      return (
+        found.code === "4000" ||
+        found.name.toLowerCase().includes("project revenue") ||
+        (found.accountLabel && found.accountLabel.includes("4000"))
+      );
+    }
+    return (
+      selectedAccount.includes("4000") ||
+      selectedAccount.toLowerCase().includes("project revenue")
+    );
+  }, [currentAccounts, selectedAccount]);
+
   const handleEntryTypeChange = (type: EntryType) => {
     setEntryType(type);
+    setSelectedProjectId("");
     const list = type === "expense" ? expenseAccounts : incomeAccounts;
     if (list.length > 0) {
       const first = list[0];
@@ -117,6 +137,16 @@ export function AddTransactionModal() {
     const val = e.target.value;
     setSelectedAccount(val);
     const found = currentAccounts.find((a) => `${a.type}-${a.code}` === val);
+    const willBeProjectRevenue = found
+      ? found.code === "4000" ||
+        found.name.toLowerCase().includes("project revenue") ||
+        Boolean(found.accountLabel && found.accountLabel.includes("4000"))
+      : val.includes("4000") || val.toLowerCase().includes("project revenue");
+
+    if (!willBeProjectRevenue) {
+      setSelectedProjectId("");
+    }
+
     if (found) {
       setCategory(found.category);
       if (
@@ -155,6 +185,17 @@ export function AddTransactionModal() {
 
     const formattedDate = formatDisplayDate(transactionDate || getTodayDateInput());
 
+    let projectId: number | undefined = undefined;
+    let projectName: string | undefined = undefined;
+
+    if (isProjectRevenue && selectedProjectId) {
+      const chosen = projects.find((p) => String(p.id) === String(selectedProjectId));
+      if (chosen) {
+        projectId = chosen.id;
+        projectName = chosen.name;
+      }
+    }
+
     addTransaction({
       name,
       category,
@@ -165,11 +206,14 @@ export function AddTransactionModal() {
       paymentMethod,
       remarks: remarks.trim() || undefined,
       is_approved: false, // Default is false, only admin can approve
+      projectId,
+      projectName,
     });
 
     setName("");
     setAmount("");
     setRemarks("");
+    setSelectedProjectId("");
     setTransactionDate(getTodayDateInput());
     setIsAddTransactionOpen(false);
   };
@@ -307,6 +351,126 @@ export function AddTransactionModal() {
             )}
           </select>
         </div>
+
+        {/* Project Selection / Tagging (Active when Account / Classification is 4000 - Project Revenue) */}
+        {isProjectRevenue && (
+          <div
+            style={{
+              marginBottom: "18px",
+              padding: "14px 16px",
+              borderRadius: "14px",
+              backgroundColor: "#F0FDF4",
+              border: "1.5px solid #BBF7D0",
+              boxShadow: "0 2px 8px rgba(22, 163, 74, 0.08)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "8px",
+              }}
+            >
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  color: "#166534",
+                }}
+              >
+                <FolderKanban size={15} color="#16A34A" />
+                <span>Tag Project</span>
+                <span
+                  style={{
+                    fontSize: "10.5px",
+                    fontWeight: 700,
+                    padding: "2px 7px",
+                    borderRadius: "9999px",
+                    backgroundColor: "#DCFCE7",
+                    color: "#15803D",
+                    border: "1px solid #BBF7D0",
+                  }}
+                >
+                  4000 Revenue
+                </span>
+              </label>
+
+              <a
+                href="/projects"
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  color: "#15803D",
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "3px",
+                }}
+              >
+                + New Project
+              </a>
+            </div>
+
+            <select
+              value={selectedProjectId}
+              onChange={(e) => {
+                const pid = e.target.value;
+                setSelectedProjectId(pid);
+                const chosen = projects.find((p) => String(p.id) === pid);
+                if (chosen) {
+                  if (
+                    !name ||
+                    name === "Project Revenue" ||
+                    name === "Service Revenue" ||
+                    name.startsWith("Project Revenue —") ||
+                    name.startsWith("Service Revenue —")
+                  ) {
+                    setName(`Project Revenue — ${chosen.name}`);
+                  }
+                }
+              }}
+              style={{
+                width: "100%",
+                padding: "11px 14px",
+                borderRadius: "10px",
+                border: "1px solid #86EFAC",
+                fontSize: "14px",
+                fontWeight: 600,
+                color: selectedProjectId ? "#14532D" : "#4B5563",
+                backgroundColor: "#FFFFFF",
+                outline: "none",
+                cursor: "pointer",
+              }}
+            >
+              <option value="">-- Select Project (Optional or Recommended) --</option>
+              {projects.map((proj) => (
+                <option key={proj.id} value={proj.id}>
+                  📁 {proj.name}
+                </option>
+              ))}
+            </select>
+
+            <div
+              style={{
+                fontSize: "11.5px",
+                color: "#15803D",
+                marginTop: "6px",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              <Sparkles size={12} color="#16A34A" />
+              <span>Tagging a project tracks revenue and profitability under that project.</span>
+            </div>
+          </div>
+        )}
 
         {/* Transaction Description */}
         <Input

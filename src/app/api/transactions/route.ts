@@ -62,6 +62,8 @@ export async function POST(request: Request) {
       paymentMethod: (body.paymentMethod as string) || 'Bank Transfer',
       remarks: body.remarks !== undefined ? (body.remarks as string) : undefined,
       is_approved: false, // Default is false; only admins can approve
+      projectId: body.projectId !== undefined && body.projectId !== null ? Number(body.projectId) : undefined,
+      projectName: body.projectName !== undefined && body.projectName !== null ? String(body.projectName).trim() : undefined,
     });
 
     return NextResponse.json({ success: true, transaction: newTx });

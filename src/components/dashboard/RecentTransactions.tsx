@@ -10,6 +10,7 @@ import {
   ChevronRight,
   X,
   Clock,
+  FolderKanban,
 } from "lucide-react";
 import { useDashboard } from "@/context/DashboardContext";
 import { useAuth } from "@/context/AuthContext";
@@ -114,6 +115,9 @@ export function RecentTransactions({
           const accountMatch = Boolean(
             item.account && item.account.toLowerCase().includes(query)
           );
+          const projectMatch = Boolean(
+            item.projectName && item.projectName.toLowerCase().includes(query)
+          );
           const paymentMethodMatch = Boolean(
             item.paymentMethod && item.paymentMethod.toLowerCase().includes(query)
           );
@@ -136,6 +140,7 @@ export function RecentTransactions({
             nameMatch ||
             categoryMatch ||
             accountMatch ||
+            projectMatch ||
             paymentMethodMatch ||
             dateMatch ||
             idMatch ||
@@ -757,29 +762,42 @@ export function RecentTransactions({
                         <div style={{ fontWeight: 600, color: "#111827" }}>
                           {tx.name}
                         </div>
-                        {tx.account ? (
-                          <div
-                            style={{
-                              fontSize: "12px",
-                              color: "#8A92A6",
-                              fontWeight: 400,
-                              marginTop: "2px",
-                            }}
-                          >
-                            {tx.account} &bull; {tx.paymentMethod || 'Bank Transfer'}
-                          </div>
-                        ) : tx.paymentMethod ? (
-                          <div
-                            style={{
-                              fontSize: "12px",
-                              color: "#8A92A6",
-                              fontWeight: 400,
-                              marginTop: "2px",
-                            }}
-                          >
-                            {tx.paymentMethod}
-                          </div>
-                        ) : null}
+                        <div
+                          style={{
+                            fontSize: "12px",
+                            color: "#8A92A6",
+                            fontWeight: 400,
+                            marginTop: "3px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          {tx.account && <span>{tx.account}</span>}
+                          {tx.projectName && (
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "3.5px",
+                                fontSize: "11px",
+                                fontWeight: 600,
+                                color: "#15803D",
+                                backgroundColor: "#F0FDF4",
+                                padding: "1px 7px",
+                                borderRadius: "5px",
+                                border: "1px solid #BBF7D0",
+                              }}
+                              title={`Project: ${tx.projectName}`}
+                            >
+                              <FolderKanban size={11} strokeWidth={2.2} />
+                              <span>{tx.projectName}</span>
+                            </span>
+                          )}
+                          {(tx.account || tx.projectName) && tx.paymentMethod && <span>&bull;</span>}
+                          {tx.paymentMethod && <span>{tx.paymentMethod}</span>}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -1013,6 +1031,28 @@ export function RecentTransactions({
                     }}
                   >
                     <span style={{ color: tx.amount < 0 ? '#DC2626' : '#16A34A', fontWeight: 600 }}>{tx.category}</span>
+                    {tx.projectName && (
+                      <>
+                        <span>&bull;</span>
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                            fontSize: "10.5px",
+                            fontWeight: 600,
+                            color: "#15803D",
+                            backgroundColor: "#F0FDF4",
+                            padding: "1px 6px",
+                            borderRadius: "4px",
+                            border: "1px solid #BBF7D0",
+                          }}
+                        >
+                          <FolderKanban size={10} strokeWidth={2.2} />
+                          <span>{tx.projectName}</span>
+                        </span>
+                      </>
+                    )}
                     <span>&bull;</span>
                     <span>{tx.date}</span>
                     <span>&bull;</span>

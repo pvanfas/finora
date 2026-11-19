@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Pencil,
   Trash2,
@@ -18,6 +18,7 @@ import {
   FileText,
   Clock,
   ShieldCheck,
+  FolderKanban,
 } from 'lucide-react';
 import { Modal, Button, Input } from '@/components/ui';
 import { Transaction, TransactionCategory } from '@/types';
@@ -36,7 +37,7 @@ export function TransactionDetailModal({
   isOpen,
   onClose,
 }: TransactionDetailModalProps) {
-  const { updateTransaction, deleteTransaction, expenseAccounts, incomeAccounts } = useDashboard();
+  const { updateTransaction, deleteTransaction, expenseAccounts, incomeAccounts, projects } = useDashboard();
   const { isAdmin } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
@@ -50,6 +51,8 @@ export function TransactionDetailModal({
   const [editAmount, setEditAmount] = useState('');
   const [editCategory, setEditCategory] = useState<TransactionCategory>('OPEX');
   const [editAccount, setEditAccount] = useState('');
+  const [editProjectId, setEditProjectId] = useState('');
+  const [editProjectName, setEditProjectName] = useState('');
   const [editPaymentMethod, setEditPaymentMethod] = useState('');
   const [editDate, setEditDate] = useState('');
   const [editRemarks, setEditRemarks] = useState('');
@@ -63,6 +66,8 @@ export function TransactionDetailModal({
     setEditAmount(Math.abs(transaction.amount).toString());
     setEditCategory(transaction.category);
     setEditAccount(transaction.account || '');
+    setEditProjectId(transaction.projectId ? String(transaction.projectId) : '');
+    setEditProjectName(transaction.projectName || '');
     setEditPaymentMethod(transaction.paymentMethod || 'Bank Transfer');
     setEditDate(transaction.date);
     setEditRemarks(transaction.remarks || '');
@@ -70,6 +75,12 @@ export function TransactionDetailModal({
     setIsEditing(false);
     setShowDeleteConfirm(false);
   }
+
+  const isEditProjectRevenue = useMemo(() => {
+    return Boolean(
+      editAccount && (editAccount.includes('4000') || editAccount.toLowerCase().includes('project revenue'))
+    );
+  }, [editAccount]);
 
   if (!transaction) return null;
 
@@ -113,6 +124,10 @@ export function TransactionDetailModal({
     setIsSaving(true);
     const finalAmount = isExpense ? -Math.abs(num) : Math.abs(num);
 
+    const chosenProject = isEditProjectRevenue
+      ? projects.find((p) => String(p.id) === String(editProjectId))
+      : null;
+
     const updates: Partial<Transaction> = {
       name: editName.trim(),
       category: editCategory,
@@ -121,6 +136,8 @@ export function TransactionDetailModal({
       account: editAccount.trim() || transaction.account,
       paymentMethod: editPaymentMethod.trim() || transaction.paymentMethod,
       remarks: editRemarks.trim() || undefined,
+      projectId: isEditProjectRevenue ? (chosenProject ? chosenProject.id : null) : null,
+      projectName: isEditProjectRevenue ? (chosenProject ? chosenProject.name : null) : null,
     };
 
     if (isAdmin) {
@@ -594,6 +611,71 @@ export function TransactionDetailModal({
                 </div>
               </div>
 
+              {/* Tagged Project (Active when project is tagged or account is 4000 Revenue) */}
+              {(Boolean(transaction.projectName) || Boolean(transaction.account && (transaction.account.includes('4000') || transaction.account.toLowerCase().includes('project revenue')))) && (
+                <div
+                  style={{
+                    gridColumn: 'span 2',
+                    padding: '10px 12px',
+                    backgroundColor: '#F0FDF4',
+                    borderRadius: '10px',
+                    border: '1px solid #DCFCE7',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: '#166534',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <FolderKanban size={13} color="#16A34A" />
+                      <span>TAGGED PROJECT (4000 REVENUE)</span>
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '13.5px',
+                      fontWeight: 700,
+                      color: transaction.projectName ? '#15803D' : '#6B7280',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    {transaction.projectName ? (
+                      <>
+                        <span>📁 {transaction.projectName}</span>
+                        {transaction.projectId && (
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              padding: '2px 7px',
+                              borderRadius: '5px',
+                              backgroundColor: '#DCFCE7',
+                              color: '#166534',
+                              border: '1px solid #BBF7D0',
+                            }}
+                          >
+                            Project #{transaction.projectId}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span style={{ fontStyle: 'italic', fontSize: '12.5px', color: '#6B7280' }}>
+                        No specific project tagged yet
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Payment Method */}
               <div
                 style={{
@@ -868,6 +950,64 @@ export function TransactionDetailModal({
                   />
                 )}
               </div>
+
+              {/* Project Selection / Tagging (Active when Account is 4000 - Project Revenue) */}
+              {isEditProjectRevenue && (
+                <div
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    backgroundColor: '#F0FDF4',
+                    border: '1.5px solid #BBF7D0',
+                  }}
+                >
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      color: '#166534',
+                      marginBottom: '6px',
+                    }}
+                  >
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <FolderKanban size={14} color="#16A34A" />
+                      Associated Project (4000)
+                    </span>
+                    <span style={{ fontSize: '11px', color: '#15803D', fontWeight: 600 }}>Revenue Tagging</span>
+                  </label>
+                  <select
+                    value={editProjectId}
+                    onChange={(e) => {
+                      const pid = e.target.value;
+                      setEditProjectId(pid);
+                      const chosen = projects.find((p) => String(p.id) === pid);
+                      setEditProjectName(chosen ? chosen.name : '');
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #86EFAC',
+                      backgroundColor: '#FFFFFF',
+                      fontSize: '13.5px',
+                      fontWeight: 600,
+                      color: editProjectId ? '#14532D' : '#4B5563',
+                      outline: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <option value="">-- No project tagged --</option>
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        📁 {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label

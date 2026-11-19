@@ -30,6 +30,8 @@ async function migrate() {
     ALTER TABLE transactions ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'Bank Transfer';
     ALTER TABLE transactions ADD COLUMN IF NOT EXISTS remarks TEXT;
     ALTER TABLE transactions ADD COLUMN IF NOT EXISTS is_approved BOOLEAN NOT NULL DEFAULT FALSE;
+    ALTER TABLE transactions ADD COLUMN IF NOT EXISTS project_id INTEGER;
+    ALTER TABLE transactions ADD COLUMN IF NOT EXISTS project_name TEXT;
   `;
 
   await sql`

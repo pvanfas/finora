@@ -33,6 +33,8 @@ export interface Transaction {
   paymentMethod?: string;
   remarks?: string;
   is_approved?: boolean;
+  projectId?: number | null;
+  projectName?: string | null;
 }
 
 export interface BudgetCategory {

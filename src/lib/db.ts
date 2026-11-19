@@ -152,7 +152,7 @@ export async function getSettings() {
 
 export async function getTransactions(): Promise<Transaction[]> {
   const rows = await withRetry((sql) => sql`
-    SELECT id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved
+    SELECT id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, project_id, project_name
     FROM transactions
     ORDER BY created_at DESC;
   `);
@@ -169,6 +169,8 @@ export async function getTransactions(): Promise<Transaction[]> {
     paymentMethod: r.payment_method || 'Bank Transfer',
     remarks: r.remarks || undefined,
     is_approved: r.is_approved !== null && r.is_approved !== undefined ? Boolean(r.is_approved) : false,
+    projectId: r.project_id !== null && r.project_id !== undefined ? Number(r.project_id) : undefined,
+    projectName: r.project_name || undefined,
   }));
 }
 
@@ -184,6 +186,8 @@ export async function addTransaction(tx: {
   paymentMethod?: string;
   remarks?: string;
   is_approved?: boolean;
+  projectId?: number | null;
+  projectName?: string | null;
 }): Promise<Transaction> {
   const id = tx.id || `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   const title = tx.title || tx.name || 'Expense';
@@ -194,10 +198,12 @@ export async function addTransaction(tx: {
   const paymentMethod = tx.paymentMethod || 'Bank Transfer';
   const remarks = tx.remarks || null;
   const isApproved = tx.is_approved !== undefined ? Boolean(tx.is_approved) : false;
+  const projectId = tx.projectId !== undefined && tx.projectId !== null ? Number(tx.projectId) : null;
+  const projectName = tx.projectName ? String(tx.projectName).trim() : null;
 
   await withRetry((sql) => sql`
-    INSERT INTO transactions (id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, created_at)
-    VALUES (${id}, ${title}, ${category}, ${amount}, ${transactionDate}, ${account}, ${paymentMethod}, ${remarks}, ${isApproved}, NOW());
+    INSERT INTO transactions (id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, project_id, project_name, created_at)
+    VALUES (${id}, ${title}, ${category}, ${amount}, ${transactionDate}, ${account}, ${paymentMethod}, ${remarks}, ${isApproved}, ${projectId}, ${projectName}, NOW());
   `);
 
   return {
@@ -212,6 +218,8 @@ export async function addTransaction(tx: {
     paymentMethod,
     remarks: remarks || undefined,
     is_approved: isApproved,
+    projectId: projectId || undefined,
+    projectName: projectName || undefined,
   };
 }
 
@@ -233,11 +241,17 @@ export async function updateTransaction(
     paymentMethod?: string;
     remarks?: string;
     is_approved?: boolean;
+    projectId?: number | null;
+    projectName?: string | null;
   }
 ): Promise<Transaction | null> {
   const title = tx.title ?? tx.name ?? null;
   const transactionDate = tx.transactionDate ?? tx.date ?? null;
   const isApproved = tx.is_approved !== undefined ? Boolean(tx.is_approved) : null;
+  const hasProjectId = tx.projectId !== undefined;
+  const projectId = tx.projectId !== undefined && tx.projectId !== null ? Number(tx.projectId) : null;
+  const hasProjectName = tx.projectName !== undefined;
+  const projectName = tx.projectName !== undefined && tx.projectName !== null ? String(tx.projectName).trim() : null;
 
   const rows = await withRetry((sql) => sql`
     UPDATE transactions
@@ -249,9 +263,11 @@ export async function updateTransaction(
       account = COALESCE(${tx.account ?? null}, account),
       payment_method = COALESCE(${tx.paymentMethod ?? null}, payment_method),
       remarks = COALESCE(${tx.remarks ?? null}, remarks),
-      is_approved = COALESCE(${isApproved}, is_approved)
+      is_approved = COALESCE(${isApproved}, is_approved),
+      project_id = ${hasProjectId ? projectId : sql`project_id`},
+      project_name = ${hasProjectName ? projectName : sql`project_name`}
     WHERE id = ${id}
-    RETURNING id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved;
+    RETURNING id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, project_id, project_name;
   `);
 
   if (rows.length === 0) return null;
@@ -268,6 +284,8 @@ export async function updateTransaction(
     paymentMethod: r.payment_method || 'Bank Transfer',
     remarks: r.remarks || undefined,
     is_approved: r.is_approved !== null && r.is_approved !== undefined ? Boolean(r.is_approved) : false,
+    projectId: r.project_id !== null && r.project_id !== undefined ? Number(r.project_id) : undefined,
+    projectName: r.project_name || undefined,
   };
 }
 
