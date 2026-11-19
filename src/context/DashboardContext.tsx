@@ -9,6 +9,7 @@ import {
   SortOption,
   AccountOption,
   TransactionCategory,
+  Project,
 } from '@/types';
 import {
   CURRENCY_SYMBOL,
@@ -47,6 +48,7 @@ export interface InitialDashboardData {
     name: string;
     accountLabel?: string;
   }[];
+  projects?: Project[];
 }
 
 interface DashboardContextType {
@@ -84,6 +86,11 @@ interface DashboardContextType {
   expenseAccounts: AccountOption[];
   incomeAccounts: AccountOption[];
   refreshAccounts: () => Promise<void>;
+
+  // Projects State
+  projects: Project[];
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  refreshProjects: () => Promise<void>;
 
   // Modals & Theme
   isCustomizeOpen: boolean;
@@ -149,6 +156,21 @@ export function DashboardProvider({
         }))
       : []
   );
+
+  const [projects, setProjects] = useState<Project[]>(() => initialData?.projects || []);
+
+  const refreshProjects = async () => {
+    try {
+      const res = await fetch('/api/projects');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setProjects(data.data);
+      }
+    } catch (err) {
+      console.warn('[DashboardContext] refreshProjects network error:', err);
+    }
+  };
 
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
@@ -534,6 +556,10 @@ export function DashboardProvider({
         expenseAccounts,
         incomeAccounts,
         refreshAccounts,
+
+        projects,
+        setProjects,
+        refreshProjects,
 
         isCustomizeOpen,
         setIsCustomizeOpen,

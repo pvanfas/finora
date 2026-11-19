@@ -15,11 +15,12 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Modal, Button, Input } from '@/components/ui';
+import { useDashboard } from '@/context/DashboardContext';
 import { Project } from '@/types';
 
 export function ProjectsManager() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { projects, setProjects, refreshProjects } = useDashboard();
+  const [isLoading, setIsLoading] = useState(projects.length === 0);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modal State for Create / Edit
@@ -46,20 +47,26 @@ export function ProjectsManager() {
 
   const fetchProjects = useCallback(async () => {
     try {
-      setIsLoading(true);
+      if (projects.length === 0) setIsLoading(true);
       const res = await fetch('/api/projects');
-      if (!res.ok) throw new Error('Failed to load projects');
+      if (!res.ok) {
+        if (projects.length > 0) return;
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || 'Failed to load projects');
+      }
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         setProjects(data.data);
       }
     } catch (err) {
-      console.error('Failed to fetch projects:', err);
-      showToast('Could not fetch projects. Please try refreshing.', 'error');
+      console.warn('Failed to fetch projects:', err);
+      if (projects.length === 0) {
+        showToast((err as Error).message || 'Could not fetch projects. Please try refreshing.', 'error');
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [showToast]);
+  }, [projects.length, setProjects, showToast]);
 
   useEffect(() => {
     fetchProjects();

@@ -552,15 +552,17 @@ export interface InitialDashboardData {
   };
   expenseAccounts: AccountRecord[];
   incomeAccounts: AccountRecord[];
+  projects?: Project[];
 }
 
 export async function getInitialDashboardData(): Promise<InitialDashboardData> {
   'use cache';
   try {
-    const [data, expenseAccounts, incomeAccounts] = await Promise.all([
+    const [data, expenseAccounts, incomeAccounts, projects] = await Promise.all([
       getAllData(),
       getExpenseAccounts().catch(() => []),
       getIncomeAccounts().catch(() => []),
+      getProjects().catch(() => []),
     ]);
 
     return {
@@ -575,6 +577,7 @@ export async function getInitialDashboardData(): Promise<InitialDashboardData> {
       },
       expenseAccounts: expenseAccounts || [],
       incomeAccounts: incomeAccounts || [],
+      projects: projects || [],
     };
   } catch (err) {
     console.warn('RSC pre-fetch fallback active:', (err as Error)?.message || err);
@@ -590,6 +593,7 @@ export async function getInitialDashboardData(): Promise<InitialDashboardData> {
       },
       expenseAccounts: [],
       incomeAccounts: [],
+      projects: [],
     };
   }
 }
@@ -597,35 +601,75 @@ export async function getInitialDashboardData(): Promise<InitialDashboardData> {
 /**
  * Projects CRUD operations
  */
-export async function getProjects(): Promise<Project[]> {
-  const rows = await withRetry((sql) => sql`
-    SELECT id, name, created_at, updated_at
-    FROM projects
-    ORDER BY id DESC;
+async function ensureProjectsTable() {
+  await withRetry((sql) => sql`
+    CREATE TABLE IF NOT EXISTS projects (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
   `);
+}
 
-  return rows.map((r) => ({
-    id: r.id,
-    name: r.name,
-    createdAt: r.created_at ? new Date(r.created_at).toISOString() : undefined,
-    updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : undefined,
-  }));
+export async function getProjects(): Promise<Project[]> {
+  try {
+    const rows = await withRetry((sql) => sql`
+      SELECT id, name, created_at, updated_at
+      FROM projects
+      ORDER BY id DESC;
+    `);
+
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      createdAt: r.created_at ? new Date(r.created_at).toISOString() : undefined,
+      updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : undefined,
+    }));
+  } catch (err) {
+    const msg = (err as Error)?.message || String(err);
+    if (msg.includes('relation "projects" does not exist') || (err as { code?: string })?.code === '42P01') {
+      await ensureProjectsTable();
+      return [];
+    }
+    throw err;
+  }
 }
 
 export async function createProject(data: { name: string }): Promise<Project> {
   const trimmed = data.name.trim();
-  const rows = await withRetry((sql) => sql`
-    INSERT INTO projects (name, created_at, updated_at)
-    VALUES (${trimmed}, NOW(), NOW())
-    RETURNING id, name, created_at, updated_at;
-  `);
-  const r = rows[0];
-  return {
-    id: r.id,
-    name: r.name,
-    createdAt: r.created_at ? new Date(r.created_at).toISOString() : undefined,
-    updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : undefined,
-  };
+  try {
+    const rows = await withRetry((sql) => sql`
+      INSERT INTO projects (name, created_at, updated_at)
+      VALUES (${trimmed}, NOW(), NOW())
+      RETURNING id, name, created_at, updated_at;
+    `);
+    const r = rows[0];
+    return {
+      id: r.id,
+      name: r.name,
+      createdAt: r.created_at ? new Date(r.created_at).toISOString() : undefined,
+      updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : undefined,
+    };
+  } catch (err) {
+    const msg = (err as Error)?.message || String(err);
+    if (msg.includes('relation "projects" does not exist') || (err as { code?: string })?.code === '42P01') {
+      await ensureProjectsTable();
+      const rows = await withRetry((sql) => sql`
+        INSERT INTO projects (name, created_at, updated_at)
+        VALUES (${trimmed}, NOW(), NOW())
+        RETURNING id, name, created_at, updated_at;
+      `);
+      const r = rows[0];
+      return {
+        id: r.id,
+        name: r.name,
+        createdAt: r.created_at ? new Date(r.created_at).toISOString() : undefined,
+        updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : undefined,
+      };
+    }
+    throw err;
+  }
 }
 
 export async function updateProject(id: number, data: { name: string }): Promise<Project | null> {
