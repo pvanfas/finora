@@ -102,12 +102,13 @@ export async function getUser(emailOrId?: string): Promise<User> {
   }
 
   const row = rows[0];
+  const isAdmin = row.role === 'admin' || row.email === 'admin@gmail.com';
   return {
     id: row.id,
     name: row.name || 'User',
     email: row.email,
     avatar: row.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-    role: row.role === 'user' ? 'Personal Pro' : (row.role || 'Personal Pro'),
+    role: isAdmin ? 'admin' : (row.role === 'user' ? 'Personal Pro' : (row.role || 'Personal Pro')),
   };
 }
 
@@ -150,7 +151,7 @@ export async function getSettings() {
 
 export async function getTransactions(): Promise<Transaction[]> {
   const rows = await withRetry((sql) => sql`
-    SELECT id, title, category, amount, transaction_date, account, payment_method, remarks
+    SELECT id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved
     FROM transactions
     ORDER BY created_at DESC;
   `);
@@ -166,6 +167,7 @@ export async function getTransactions(): Promise<Transaction[]> {
     account: r.account || undefined,
     paymentMethod: r.payment_method || 'Bank Transfer',
     remarks: r.remarks || undefined,
+    is_approved: r.is_approved !== null && r.is_approved !== undefined ? Boolean(r.is_approved) : false,
   }));
 }
 
@@ -180,6 +182,7 @@ export async function addTransaction(tx: {
   account?: string;
   paymentMethod?: string;
   remarks?: string;
+  is_approved?: boolean;
 }): Promise<Transaction> {
   const id = tx.id || `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   const title = tx.title || tx.name || 'Expense';
@@ -189,10 +192,11 @@ export async function addTransaction(tx: {
   const account = tx.account || null;
   const paymentMethod = tx.paymentMethod || 'Bank Transfer';
   const remarks = tx.remarks || null;
+  const isApproved = tx.is_approved !== undefined ? Boolean(tx.is_approved) : false;
 
   await withRetry((sql) => sql`
-    INSERT INTO transactions (id, title, category, amount, transaction_date, account, payment_method, remarks, created_at)
-    VALUES (${id}, ${title}, ${category}, ${amount}, ${transactionDate}, ${account}, ${paymentMethod}, ${remarks}, NOW());
+    INSERT INTO transactions (id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, created_at)
+    VALUES (${id}, ${title}, ${category}, ${amount}, ${transactionDate}, ${account}, ${paymentMethod}, ${remarks}, ${isApproved}, NOW());
   `);
 
   return {
@@ -206,6 +210,7 @@ export async function addTransaction(tx: {
     account: account || undefined,
     paymentMethod,
     remarks: remarks || undefined,
+    is_approved: isApproved,
   };
 }
 
@@ -226,10 +231,12 @@ export async function updateTransaction(
     account?: string;
     paymentMethod?: string;
     remarks?: string;
+    is_approved?: boolean;
   }
 ): Promise<Transaction | null> {
   const title = tx.title ?? tx.name ?? null;
   const transactionDate = tx.transactionDate ?? tx.date ?? null;
+  const isApproved = tx.is_approved !== undefined ? Boolean(tx.is_approved) : null;
 
   const rows = await withRetry((sql) => sql`
     UPDATE transactions
@@ -240,9 +247,10 @@ export async function updateTransaction(
       transaction_date = COALESCE(${transactionDate}, transaction_date),
       account = COALESCE(${tx.account ?? null}, account),
       payment_method = COALESCE(${tx.paymentMethod ?? null}, payment_method),
-      remarks = COALESCE(${tx.remarks ?? null}, remarks)
+      remarks = COALESCE(${tx.remarks ?? null}, remarks),
+      is_approved = COALESCE(${isApproved}, is_approved)
     WHERE id = ${id}
-    RETURNING id, title, category, amount, transaction_date, account, payment_method, remarks;
+    RETURNING id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved;
   `);
 
   if (rows.length === 0) return null;
@@ -258,6 +266,7 @@ export async function updateTransaction(
     account: r.account || undefined,
     paymentMethod: r.payment_method || 'Bank Transfer',
     remarks: r.remarks || undefined,
+    is_approved: r.is_approved !== null && r.is_approved !== undefined ? Boolean(r.is_approved) : false,
   };
 }
 
@@ -421,6 +430,43 @@ export async function createExpenseAccount(data: { type: string; code: string; n
   };
 }
 
+export async function updateExpenseAccount(
+  id: number,
+  data: { type?: string; code?: string; name?: string }
+): Promise<AccountRecord | null> {
+  const currentRows = await withRetry((sql) => sql`SELECT id, type, code, name FROM expense_accounts WHERE id = ${id}`);
+  if (currentRows.length === 0) return null;
+  const current = currentRows[0];
+
+  const type = data.type || current.type;
+  const code = data.code || current.code;
+  const name = data.name || current.name;
+  const accountLabel = `${code} - ${name}`;
+
+  const rows = await withRetry((sql) => sql`
+    UPDATE expense_accounts
+    SET type = ${type}, code = ${code}, name = ${name}, account_label = ${accountLabel}
+    WHERE id = ${id}
+    RETURNING id, type, code, name, account_label;
+  `);
+
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    id: r.id,
+    type: r.type,
+    code: r.code,
+    name: r.name,
+    accountLabel: r.account_label,
+    category: 'EXPENSE',
+  };
+}
+
+export async function deleteExpenseAccount(id: number): Promise<boolean> {
+  await withRetry((sql) => sql`DELETE FROM expense_accounts WHERE id = ${id}`);
+  return true;
+}
+
 export async function createIncomeAccount(data: { type: string; code: string; name: string }): Promise<AccountRecord> {
   const accountLabel = `${data.code} - ${data.name}`;
   const rows = await withRetry((sql) => sql`
@@ -437,6 +483,43 @@ export async function createIncomeAccount(data: { type: string; code: string; na
     accountLabel: r.account_label,
     category: 'INCOME',
   };
+}
+
+export async function updateIncomeAccount(
+  id: number,
+  data: { type?: string; code?: string; name?: string }
+): Promise<AccountRecord | null> {
+  const currentRows = await withRetry((sql) => sql`SELECT id, type, code, name FROM income_accounts WHERE id = ${id}`);
+  if (currentRows.length === 0) return null;
+  const current = currentRows[0];
+
+  const type = data.type || current.type;
+  const code = data.code || current.code;
+  const name = data.name || current.name;
+  const accountLabel = `${code} - ${name}`;
+
+  const rows = await withRetry((sql) => sql`
+    UPDATE income_accounts
+    SET type = ${type}, code = ${code}, name = ${name}, account_label = ${accountLabel}
+    WHERE id = ${id}
+    RETURNING id, type, code, name, account_label;
+  `);
+
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    id: r.id,
+    type: r.type,
+    code: r.code,
+    name: r.name,
+    accountLabel: r.account_label,
+    category: 'INCOME',
+  };
+}
+
+export async function deleteIncomeAccount(id: number): Promise<boolean> {
+  await withRetry((sql) => sql`DELETE FROM income_accounts WHERE id = ${id}`);
+  return true;
 }
 
 /**

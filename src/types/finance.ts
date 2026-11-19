@@ -25,6 +25,7 @@ export interface Transaction {
   account?: string;
   paymentMethod?: string;
   remarks?: string;
+  is_approved?: boolean;
 }
 
 export interface BudgetCategory {

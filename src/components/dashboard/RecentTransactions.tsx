@@ -9,8 +9,10 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Clock,
 } from "lucide-react";
 import { useDashboard } from "@/context/DashboardContext";
+import { useAuth } from "@/context/AuthContext";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { formatINR, parseTxDate } from "@/lib/formatters";
 import { SortOption, Transaction } from "@/types/finance";
@@ -40,7 +42,9 @@ export function RecentTransactions({
     setSortBy,
     searchQuery,
     setSearchQuery,
+    approveTransaction,
   } = useDashboard();
+  const { isAdmin } = useAuth();
 
   const [typeFilter, setTypeFilter] = useState<"All" | "income" | "expense">("All");
   const [showFilterMenu, setShowFilterMenu] = useState(false);
@@ -632,12 +636,23 @@ export function RecentTransactions({
                   fontSize: "13px",
                   fontWeight: 500,
                   color: "#6B7280",
-                  width: isIncomePage ? "20%" : "18%",
-                  minWidth: isIncomePage ? "160px" : "140px",
+                  width: isIncomePage ? "18%" : "16%",
+                  minWidth: isIncomePage ? "140px" : "130px",
                   whiteSpace: "nowrap",
                 }}
               >
                 Date
+              </th>
+              <th
+                style={{
+                  padding: "12px 16px",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "#6B7280",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Status
               </th>
               <th
                 style={{
@@ -671,7 +686,7 @@ export function RecentTransactions({
             {currentTransactions.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   style={{
                     padding: "36px 16px",
                     textAlign: "center",
@@ -794,12 +809,85 @@ export function RecentTransactions({
                       padding: "16px",
                       fontSize: "13.5px",
                       color: "#6B7280",
-                      width: isIncomePage ? "20%" : "18%",
-                      minWidth: isIncomePage ? "160px" : "140px",
+                      width: isIncomePage ? "18%" : "16%",
+                      minWidth: isIncomePage ? "140px" : "130px",
                       whiteSpace: "nowrap",
                     }}
                   >
                     {tx.date}
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px",
+                      fontSize: "12px",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      {tx.is_approved ? (
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            padding: "3px 8px",
+                            borderRadius: "6px",
+                            backgroundColor: "#ECFDF5",
+                            fontSize: "11.5px",
+                            fontWeight: 600,
+                            color: "#16A34A",
+                            border: "1px solid #D1FAE5",
+                          }}
+                        >
+                          <Check size={12} strokeWidth={2.5} />
+                          <span>Approved</span>
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            padding: "3px 8px",
+                            borderRadius: "6px",
+                            backgroundColor: "#FFFBEB",
+                            fontSize: "11.5px",
+                            fontWeight: 600,
+                            color: "#D97706",
+                            border: "1px solid #FDE68A",
+                          }}
+                        >
+                          <Clock size={12} strokeWidth={2.5} />
+                          <span>Pending</span>
+                        </span>
+                      )}
+                      {isAdmin && !tx.is_approved && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            approveTransaction(tx.id, true);
+                          }}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                            padding: "3px 7px",
+                            borderRadius: "6px",
+                            backgroundColor: "#16A34A",
+                            color: "#FFFFFF",
+                            border: "none",
+                            fontSize: "11px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            boxShadow: "0 1px 2px rgba(22, 163, 74, 0.2)",
+                          }}
+                          title="Approve this transaction (Admin only)"
+                        >
+                          Approve
+                        </button>
+                      )}
+                    </div>
                   </td>
                   <td
                     style={{
@@ -921,11 +1009,43 @@ export function RecentTransactions({
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
+                      flexWrap: "wrap",
                     }}
                   >
                     <span style={{ color: tx.amount < 0 ? '#DC2626' : '#16A34A', fontWeight: 600 }}>{tx.category}</span>
                     <span>&bull;</span>
                     <span>{tx.date}</span>
+                    <span>&bull;</span>
+                    {tx.is_approved ? (
+                      <span style={{ color: "#16A34A", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "2px" }}>
+                        <Check size={11} strokeWidth={2.5} /> Approved
+                      </span>
+                    ) : (
+                      <span style={{ color: "#D97706", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "2px" }}>
+                        <Clock size={11} strokeWidth={2.5} /> Pending
+                      </span>
+                    )}
+                    {isAdmin && !tx.is_approved && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          approveTransaction(tx.id, true);
+                        }}
+                        style={{
+                          padding: "2px 7px",
+                          borderRadius: "4px",
+                          backgroundColor: "#16A34A",
+                          color: "#FFFFFF",
+                          border: "none",
+                          fontSize: "10.5px",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Approve
+                      </button>
+                    )}
                   </div>
                   {tx.remarks && (
                     <div

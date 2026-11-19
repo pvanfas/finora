@@ -52,12 +52,13 @@ export function formatAxisK(amount: number, symbol = CURRENCY_SYMBOL): string {
 }
 
 /**
- * Parses date string (e.g. 'Apr 27, 2026', 'Today', 'Yesterday') to timestamp for chronological sorting
+ * Parses date string (e.g. 'Apr 27, 2026', 'Today', 'Yesterday') to timestamp for chronological sorting.
+ * Uses stable constants for relative dates to avoid unstable Date.now() during Next.js prerender.
  */
 export function parseTxDate(dateStr?: string): number {
   if (!dateStr) return 0;
-  if (dateStr.startsWith('Today')) return Date.now();
-  if (dateStr.startsWith('Yesterday')) return Date.now() - 86400000;
+  if (dateStr.startsWith('Today')) return 9999999999999;
+  if (dateStr.startsWith('Yesterday')) return 9999999999999 - 86400000;
   const parsed = Date.parse(dateStr);
   return isNaN(parsed) ? 0 : parsed;
 }

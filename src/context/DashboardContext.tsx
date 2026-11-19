@@ -72,6 +72,7 @@ interface DashboardContextType {
   addTransaction: (tx: Omit<Transaction, 'id'>) => void;
   updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<boolean>;
   deleteTransaction: (id: string) => Promise<boolean>;
+  approveTransaction: (id: string, approved?: boolean) => Promise<boolean>;
 
   // Chart & Budget States
   selectedTrendDay: string;
@@ -492,6 +493,10 @@ export function DashboardProvider({
     }
   };
 
+  const approveTransaction = async (id: string, approved: boolean = true): Promise<boolean> => {
+    return await updateTransaction(id, { is_approved: approved });
+  };
+
   const updateBudget = (newBudget: number) => {
     setMonthlyBudget(newBudget);
   };
@@ -519,6 +524,7 @@ export function DashboardProvider({
         addTransaction,
         updateTransaction,
         deleteTransaction,
+        approveTransaction,
 
         selectedTrendDay,
         setSelectedTrendDay,

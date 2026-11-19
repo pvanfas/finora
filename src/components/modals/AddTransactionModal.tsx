@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Plus, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { useDashboard } from "@/context/DashboardContext";
@@ -8,6 +8,26 @@ import { Modal, Button, Input } from "@/components/ui";
 import { TransactionCategory } from "@/types";
 
 type EntryType = "expense" | "income";
+
+const getTodayDateInput = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const formatDisplayDate = (isoDate: string) => {
+  if (!isoDate) return "Today";
+  const [y, m, d] = isoDate.split("-").map(Number);
+  if (!y || !m || !d) return isoDate;
+  const dateObj = new Date(y, m - 1, d);
+  return dateObj.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
 
 export function AddTransactionModal() {
   const pathname = usePathname();
@@ -23,11 +43,16 @@ export function AddTransactionModal() {
 
   const [entryType, setEntryType] = useState<EntryType>("expense");
   const [name, setName] = useState("");
+  const [transactionDate, setTransactionDate] = useState<string>("");
   const [selectedAccount, setSelectedAccount] = useState<string>("");
   const [category, setCategory] = useState<TransactionCategory>("OPEX");
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
   const [remarks, setRemarks] = useState("");
+
+  useEffect(() => {
+    setTransactionDate(getTodayDateInput());
+  }, []);
 
   const currentAccounts =
     entryType === "expense" ? expenseAccounts : incomeAccounts;
@@ -128,19 +153,24 @@ export function AddTransactionModal() {
         : found.name
       : selectedAccount;
 
+    const formattedDate = formatDisplayDate(transactionDate || getTodayDateInput());
+
     addTransaction({
       name,
       category,
       amount: finalAmount,
-      date: "Today",
+      date: formattedDate,
+      transactionDate: formattedDate,
       account: accountLabel,
       paymentMethod,
       remarks: remarks.trim() || undefined,
+      is_approved: false, // Default is false, only admin can approve
     });
 
     setName("");
     setAmount("");
     setRemarks("");
+    setTransactionDate(getTodayDateInput());
     setIsAddTransactionOpen(false);
   };
 
@@ -148,9 +178,10 @@ export function AddTransactionModal() {
     <Modal
       isOpen={isAddTransactionOpen}
       onClose={() => setIsAddTransactionOpen(false)}
-      title={entryType === "expense" ? "Log New Expense" : "Record New Income"}
-      description="Record an entry to keep your chart of accounts"
+      title={entryType === "expense" ? "Log Expense (Cash Out)" : "Record Income (Cash In)"}
+      description="Record an entry to keep your chart of accounts accurate"
       maxWidth="480px"
+      isStatic={true}
     >
       <form onSubmit={handleSubmit} style={{ padding: "24px" }}>
         {/* Toggle Type */}
@@ -191,7 +222,7 @@ export function AddTransactionModal() {
               size={16}
               color={entryType === "expense" ? "#DC2626" : "#6B7280"}
             />
-            Expense (Debit)
+            Cash Out (Expense)
           </button>
           <button
             type="button"
@@ -220,7 +251,7 @@ export function AddTransactionModal() {
               size={16}
               color={entryType === "income" ? "#16A34A" : "#6B7280"}
             />
-            Income (Credit)
+            Cash In (Income)
           </button>
         </div>
 
@@ -298,6 +329,37 @@ export function AddTransactionModal() {
             marginBottom: "16px",
           }}
         >
+          {/* Date of Transaction */}
+          <div>
+            <label
+              style={{
+                display: "block",
+                fontSize: "13px",
+                fontWeight: 600,
+                color: "#374151",
+                marginBottom: "6px",
+              }}
+            >
+              Date of Transaction
+            </label>
+            <input
+              type="date"
+              value={transactionDate}
+              onChange={(e) => setTransactionDate(e.target.value)}
+              required
+              style={{
+                width: "100%",
+                padding: "11px 14px",
+                borderRadius: "12px",
+                border: "1px solid #D1D5DB",
+                fontSize: "14px",
+                color: "#111827",
+                outline: "none",
+                backgroundColor: "#FFFFFF",
+              }}
+            />
+          </div>
+
           {/* Amount */}
           <div>
             <label
@@ -330,42 +392,42 @@ export function AddTransactionModal() {
               }}
             />
           </div>
+        </div>
 
-          {/* Payment Method */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "13px",
-                fontWeight: 600,
-                color: "#374151",
-                marginBottom: "6px",
-              }}
-            >
-              Payment Method
-            </label>
-            <select
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "11px 14px",
-                borderRadius: "12px",
-                border: "1px solid #D1D5DB",
-                fontSize: "14px",
-                color: "#111827",
-                backgroundColor: "#FFFFFF",
-                outline: "none",
-              }}
-            >
-              <option value="Bank Transfer">Bank Transfer</option>
-              <option value="Corporate Card">Corporate Card</option>
-              <option value="Debit Card">Debit Card</option>
-              <option value="UPI Direct">UPI Direct</option>
-              <option value="Cheque">Cheque</option>
-              <option value="Cash">Cash</option>
-            </select>
-          </div>
+        {/* Payment Method */}
+        <div style={{ marginBottom: "16px" }}>
+          <label
+            style={{
+              display: "block",
+              fontSize: "13px",
+              fontWeight: 600,
+              color: "#374151",
+              marginBottom: "6px",
+            }}
+          >
+            Payment Method
+          </label>
+          <select
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "11px 14px",
+              borderRadius: "12px",
+              border: "1px solid #D1D5DB",
+              fontSize: "14px",
+              color: "#111827",
+              backgroundColor: "#FFFFFF",
+              outline: "none",
+            }}
+          >
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="Corporate Card">Corporate Card</option>
+            <option value="Debit Card">Debit Card</option>
+            <option value="UPI Direct">UPI Direct</option>
+            <option value="Cheque">Cheque</option>
+            <option value="Cash">Cash</option>
+          </select>
         </div>
 
         {/* Remarks (Optional) */}
@@ -425,7 +487,7 @@ export function AddTransactionModal() {
                   : "0 4px 14px rgba(22, 163, 74, 0.35)",
             }}
           >
-            {entryType === "expense" ? "Log Expense" : "Log Income"}
+            {entryType === "expense" ? "Log Cash Out" : "Record Cash In"}
           </Button>
         </div>
       </form>

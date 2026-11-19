@@ -14,6 +14,7 @@ export interface ModalProps {
   children: React.ReactNode;
   maxWidth?: string;
   className?: string;
+  isStatic?: boolean;
 }
 
 export function Modal({
@@ -24,19 +25,30 @@ export function Modal({
   children,
   maxWidth = '520px',
   className,
+  isStatic = false,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const [pulse, setPulse] = React.useState(false);
 
-  // Close on Escape key
-  useKeyPress('Escape', onClose, isOpen);
+  // Close on Escape key only if NOT static
+  useKeyPress('Escape', isStatic ? () => {} : onClose, isOpen && !isStatic);
 
-  // Close on Outside click
-  useClickOutside(modalRef, onClose, isOpen);
+  // Close on Outside click only if NOT static
+  useClickOutside(modalRef, isStatic ? () => {} : onClose, isOpen && !isStatic);
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // If static modal and user clicked the backdrop outside the dialog
+    if (isStatic && e.target === e.currentTarget) {
+      setPulse(true);
+      setTimeout(() => setPulse(false), 200);
+    }
+  };
 
   if (!isOpen) return null;
 
   return (
     <div
+      onClick={handleBackdropClick}
       style={{
         position: 'fixed',
         inset: 0,
@@ -65,6 +77,8 @@ export function Modal({
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
+          transform: pulse ? 'scale(1.02)' : 'scale(1)',
+          transition: 'transform 0.15s ease-out',
         }}
       >
         {/* Modal Header */}

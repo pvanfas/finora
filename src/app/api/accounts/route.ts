@@ -5,6 +5,10 @@ import {
   getChartOfAccounts,
   createExpenseAccount,
   createIncomeAccount,
+  updateExpenseAccount,
+  deleteExpenseAccount,
+  updateIncomeAccount,
+  deleteIncomeAccount,
 } from '@/lib/db';
 
 async function safeJson(request: Request): Promise<Record<string, unknown> | null> {
@@ -91,6 +95,105 @@ export async function POST(request: Request) {
           : (msg || 'Failed to create account'),
       },
       { status: isDuplicate ? 409 : 500 }
+    );
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const body = await safeJson(request);
+    if (!body) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid or missing JSON body' },
+        { status: 400 }
+      );
+    }
+
+    const { id, category, type, code, name } = body as {
+      id?: number | string;
+      category?: string;
+      type?: string;
+      code?: string;
+      name?: string;
+    };
+
+    const numId = typeof id === 'number' ? id : parseInt(String(id), 10);
+    if (isNaN(numId) || numId <= 0) {
+      return NextResponse.json(
+        { success: false, error: 'Valid account id is required' },
+        { status: 400 }
+      );
+    }
+
+    if (category === 'INCOME') {
+      const updated = await updateIncomeAccount(numId, { type, code, name });
+      if (!updated) {
+        return NextResponse.json(
+          { success: false, error: `Income account #${numId} not found` },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json({ success: true, account: updated });
+    } else {
+      const updated = await updateExpenseAccount(numId, { type, code, name });
+      if (!updated) {
+        return NextResponse.json(
+          { success: false, error: `Expense account #${numId} not found` },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json({ success: true, account: updated });
+    }
+  } catch (error) {
+    console.error('PUT /api/accounts error:', error);
+    const msg = (error as Error).message || '';
+    const isDuplicate = msg.includes('duplicate') || msg.includes('unique') || msg.includes('already exists');
+    return NextResponse.json(
+      {
+        success: false,
+        error: isDuplicate
+          ? 'An account with this code already exists'
+          : (msg || 'Failed to update account'),
+      },
+      { status: isDuplicate ? 409 : 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    let idParam = searchParams.get('id');
+    let categoryParam = searchParams.get('category');
+
+    if (!idParam) {
+      const body = await safeJson(request);
+      idParam = body?.id !== undefined ? String(body.id) : null;
+      if (!categoryParam && body?.category) {
+        categoryParam = String(body.category);
+      }
+    }
+
+    const numId = parseInt(String(idParam), 10);
+    if (isNaN(numId) || numId <= 0) {
+      return NextResponse.json(
+        { success: false, error: 'Valid account id is required' },
+        { status: 400 }
+      );
+    }
+
+    if (categoryParam?.toUpperCase() === 'INCOME') {
+      await deleteIncomeAccount(numId);
+      return NextResponse.json({ success: true, deletedId: numId, category: 'INCOME' });
+    } else {
+      await deleteExpenseAccount(numId);
+      return NextResponse.json({ success: true, deletedId: numId, category: 'EXPENSE' });
+    }
+  } catch (error) {
+    console.error('DELETE /api/accounts error:', error);
+    return NextResponse.json(
+      { success: false, error: (error as Error).message || 'Failed to delete account' },
+      { status: 500 }
     );
   }
 }

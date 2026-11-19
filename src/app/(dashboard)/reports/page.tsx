@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { SpendingBreakdown } from "@/components/dashboard/SpendingBreakdown";
+import { AccountsManager } from "@/components/reports/AccountsManager";
 import { Download, FileText, CheckCircle2, FileDown } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useDashboard } from "@/context/DashboardContext";
@@ -231,6 +232,9 @@ export default function ReportsPage() {
           {/* Right Column: Spending Breakdown */}
           <SpendingBreakdown />
         </div>
+
+        {/* Chart of Accounts Directory (Expense & Income Accounts CRUD) */}
+        <AccountsManager />
       </div>
     </DashboardShell>
   );

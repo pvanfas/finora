@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getTransactions, addTransaction, deleteTransaction, updateTransaction } from '@/lib/db';
+import { getTransactions, addTransaction, deleteTransaction, updateTransaction, getUser } from '@/lib/db';
+import { auth } from '@/lib/auth/server';
 
 /** Safely parse JSON body — returns null on malformed input instead of throwing */
 async function safeJson(request: Request): Promise<Record<string, unknown> | null> {
@@ -60,6 +61,7 @@ export async function POST(request: Request) {
       account: body.account as string | undefined,
       paymentMethod: (body.paymentMethod as string) || 'Bank Transfer',
       remarks: body.remarks !== undefined ? (body.remarks as string) : undefined,
+      is_approved: false, // Default is false; only admins can approve
     });
 
     return NextResponse.json({ success: true, transaction: newTx });
@@ -88,6 +90,31 @@ export async function PUT(request: Request) {
         { success: false, error: 'Transaction id is required and must be a string' },
         { status: 400 }
       );
+    }
+
+    // Enforce admin-only authorization for approval changes
+    if (updates.is_approved !== undefined) {
+      const sessionRes = await auth.getSession().catch(() => null);
+      const sessionUser = sessionRes?.data?.user;
+      let isAdmin = false;
+
+      if (sessionUser) {
+        if (sessionUser.email === 'admin@gmail.com' || (sessionUser as { role?: string }).role === 'admin') {
+          isAdmin = true;
+        } else {
+          const dbUser = await getUser(sessionUser.id || sessionUser.email).catch(() => null);
+          if (dbUser?.role === 'admin' || dbUser?.email === 'admin@gmail.com') {
+            isAdmin = true;
+          }
+        }
+      }
+
+      if (!isAdmin) {
+        return NextResponse.json(
+          { success: false, error: 'Unauthorized: Only administrators can approve transactions' },
+          { status: 403 }
+        );
+      }
     }
 
     // Coerce amount if provided

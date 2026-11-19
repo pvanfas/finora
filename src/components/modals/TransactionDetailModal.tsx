@@ -16,11 +16,14 @@ import {
   Save,
   X,
   FileText,
+  Clock,
+  ShieldCheck,
 } from 'lucide-react';
 import { Modal, Button, Input } from '@/components/ui';
 import { Transaction, TransactionCategory } from '@/types';
 import { formatINR } from '@/lib/formatters';
 import { useDashboard } from '@/context/DashboardContext';
+import { useAuth } from '@/context/AuthContext';
 
 interface TransactionDetailModalProps {
   transaction: Transaction | null;
@@ -34,9 +37,11 @@ export function TransactionDetailModal({
   onClose,
 }: TransactionDetailModalProps) {
   const { updateTransaction, deleteTransaction, expenseAccounts, incomeAccounts } = useDashboard();
+  const { isAdmin } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -48,6 +53,7 @@ export function TransactionDetailModal({
   const [editPaymentMethod, setEditPaymentMethod] = useState('');
   const [editDate, setEditDate] = useState('');
   const [editRemarks, setEditRemarks] = useState('');
+  const [editIsApproved, setEditIsApproved] = useState(false);
 
   // Sync edit form when opening or changing transaction
   const [prevTxId, setPrevTxId] = useState<string | null>(null);
@@ -60,6 +66,7 @@ export function TransactionDetailModal({
     setEditPaymentMethod(transaction.paymentMethod || 'Bank Transfer');
     setEditDate(transaction.date);
     setEditRemarks(transaction.remarks || '');
+    setEditIsApproved(Boolean(transaction.is_approved));
     setIsEditing(false);
     setShowDeleteConfirm(false);
   }
@@ -91,6 +98,13 @@ export function TransactionDetailModal({
     }
   };
 
+  const handleApprove = async () => {
+    if (!transaction) return;
+    setIsApproving(true);
+    await updateTransaction(transaction.id, { is_approved: true });
+    setIsApproving(false);
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const num = parseFloat(editAmount);
@@ -99,7 +113,7 @@ export function TransactionDetailModal({
     setIsSaving(true);
     const finalAmount = isExpense ? -Math.abs(num) : Math.abs(num);
 
-    const success = await updateTransaction(transaction.id, {
+    const updates: Partial<Transaction> = {
       name: editName.trim(),
       category: editCategory,
       amount: finalAmount,
@@ -107,7 +121,13 @@ export function TransactionDetailModal({
       account: editAccount.trim() || transaction.account,
       paymentMethod: editPaymentMethod.trim() || transaction.paymentMethod,
       remarks: editRemarks.trim() || undefined,
-    });
+    };
+
+    if (isAdmin) {
+      updates.is_approved = editIsApproved;
+    }
+
+    const success = await updateTransaction(transaction.id, updates);
 
     setIsSaving(false);
     if (success) {
@@ -137,7 +157,7 @@ export function TransactionDetailModal({
             marginBottom: '18px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <span
               style={{
                 display: 'inline-flex',
@@ -167,9 +187,72 @@ export function TransactionDetailModal({
             >
               {transaction.category}
             </span>
+            {transaction.is_approved ? (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '11.5px',
+                  fontWeight: 600,
+                  color: '#16A34A',
+                  backgroundColor: '#ECFDF5',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid #D1FAE5',
+                }}
+              >
+                <Check size={12} strokeWidth={2.5} />
+                <span>Approved</span>
+              </span>
+            ) : (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '11.5px',
+                  fontWeight: 600,
+                  color: '#D97706',
+                  backgroundColor: '#FFFBEB',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid #FDE68A',
+                }}
+              >
+                <Clock size={12} strokeWidth={2.5} />
+                <span>Pending Approval</span>
+              </span>
+            )}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {isAdmin && !transaction.is_approved && !isEditing && (
+              <button
+                type="button"
+                onClick={handleApprove}
+                disabled={isApproving}
+                title="Approve this transaction (Admin only)"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: '#16A34A',
+                  color: '#FFFFFF',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  boxShadow: '0 1px 2px rgba(22, 163, 74, 0.25)',
+                }}
+              >
+                <Check size={13} strokeWidth={2.5} />
+                <span>{isApproving ? 'Approving...' : 'Approve'}</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -391,6 +474,56 @@ export function TransactionDetailModal({
                 </div>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>
                   {transaction.date}
+                </div>
+              </div>
+
+              {/* Approval Status */}
+              <div
+                style={{
+                  padding: '12px',
+                  backgroundColor: transaction.is_approved ? '#F0FDF4' : '#FFFBEB',
+                  borderRadius: '10px',
+                  border: transaction.is_approved ? '1px solid #DCFCE7' : '1px solid #FEF3C7',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: transaction.is_approved ? '#166534' : '#92400E',
+                    marginBottom: '4px',
+                  }}
+                >
+                  <ShieldCheck size={13} color={transaction.is_approved ? '#16A34A' : '#D97706'} />
+                  <span>APPROVAL STATUS</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: transaction.is_approved ? '#16A34A' : '#D97706' }}>
+                    {transaction.is_approved ? 'Approved' : 'Pending Approval'}
+                  </div>
+                  {isAdmin && !transaction.is_approved && (
+                    <button
+                      type="button"
+                      disabled={isApproving}
+                      onClick={handleApprove}
+                      style={{
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        backgroundColor: '#16A34A',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        boxShadow: '0 1px 2px rgba(22, 163, 74, 0.2)',
+                      }}
+                    >
+                      {isApproving ? '...' : 'Approve Now'}
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -790,6 +923,39 @@ export function TransactionDetailModal({
                   placeholder="e.g. Approved by board, invoice #1029, tax deductible"
                 />
               </div>
+
+              {isAdmin && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '12px 14px',
+                    backgroundColor: editIsApproved ? '#ECFDF5' : '#FFFBEB',
+                    borderRadius: '8px',
+                    border: editIsApproved ? '1px solid #D1FAE5' : '1px solid #FDE68A',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    id="editIsApproved"
+                    checked={editIsApproved}
+                    onChange={(e) => setEditIsApproved(e.target.checked)}
+                    style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#16A34A' }}
+                  />
+                  <label
+                    htmlFor="editIsApproved"
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: editIsApproved ? '#065F46' : '#92400E',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Approved by Administrator
+                  </label>
+                </div>
+              )}
 
               {/* Form Buttons */}
               <div

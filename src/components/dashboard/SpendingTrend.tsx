@@ -104,17 +104,44 @@ export function SpendingTrend({
   incomesOnly = false,
 }: SpendingTrendProps) {
   const { transactions } = useDashboard();
-  const [timeRange, setTimeRange] = useState<
-    "Last 6 Months" | "Last 12 Months" | "Year 2026" | "All Months"
-  >("Last 6 Months");
+  const [timeRange, setTimeRange] = useState("All time");
   const [showRangeMenu, setShowRangeMenu] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const menuRef = useRef<HTMLDivElement>(null);
   useClickOutside(menuRef, () => setShowRangeMenu(false), showRangeMenu);
 
+  // Compute monthwise options from transactions matching SpendingBreakdown
+  const timeframeOptions = useMemo(() => {
+    const set = new Set<string>();
+
+    for (const t of transactions) {
+      if (t.date.startsWith("Today")) {
+        set.add("October 2026");
+      } else {
+        const parts = t.date.split(",");
+        if (parts.length >= 2) {
+          const y = parts[1].trim();
+          const mAbbr = parts[0].trim().split(" ")[0];
+          if (MONTH_ABBR_MAP[mAbbr] !== undefined) {
+            set.add(`${MONTH_NAMES[MONTH_ABBR_MAP[mAbbr]]} ${y}`);
+          }
+        }
+      }
+    }
+
+    const sortedMonths = Array.from(set).sort((a, b) => {
+      const [ma, ya] = a.split(" ");
+      const [mb, yb] = b.split(" ");
+      if (ya !== yb) return parseInt(yb, 10) - parseInt(ya, 10);
+      return MONTH_NAMES.indexOf(mb) - MONTH_NAMES.indexOf(ma);
+    });
+
+    return ["All time", ...sortedMonths];
+  }, [transactions]);
+
   // 1. Group all authentic transactions by month chronologically
-  const allMonthlyData = useMemo(() => {
+  const allMonthlyData: MonthData[] = useMemo(() => {
     const monthMap = new Map<
       string,
       { income: number; expense: number; year: number; monthIndex: number }
@@ -175,24 +202,104 @@ export function SpendingTrend({
     });
   }, [transactions]);
 
-  // 2. Filter months based on selected time range
+  // 2. Filter data points based on selected month or All time
   const filteredMonths: MonthData[] = useMemo(() => {
-    if (allMonthlyData.length === 0) return [];
-
-    switch (timeRange) {
-      case "Last 6 Months":
-        return allMonthlyData.slice(-6);
-      case "Last 12 Months":
-        return allMonthlyData.slice(-12);
-      case "Year 2026": {
-        const in2026 = allMonthlyData.filter((m) => m.year === 2026);
-        return in2026.length > 0 ? in2026 : allMonthlyData.slice(-6);
-      }
-      case "All Months":
-      default:
-        return allMonthlyData;
+    if (timeRange === "All time") {
+      return allMonthlyData;
     }
-  }, [allMonthlyData, timeRange]);
+
+    // Specific Month Selected: Group transactions by day of that month
+    const dayMap = new Map<number, { income: number; expense: number; day: number }>();
+
+    for (const t of transactions) {
+      let isMatch = false;
+      let day = 1;
+
+      if (t.date.startsWith("Today")) {
+        if (timeRange === "October 2026") {
+          isMatch = true;
+          day = 28;
+        }
+      } else {
+        const parts = t.date.split(",");
+        if (parts.length >= 2) {
+          const y = parts[1].trim();
+          const [mAbbr, dStr] = parts[0].trim().split(" ");
+          if (MONTH_ABBR_MAP[mAbbr] !== undefined) {
+            const mFull = `${MONTH_NAMES[MONTH_ABBR_MAP[mAbbr]]} ${y}`;
+            if (mFull === timeRange) {
+              isMatch = true;
+              day = parseInt(dStr, 10) || 1;
+            }
+          }
+        }
+      }
+
+      if (isMatch) {
+        const existing = dayMap.get(day) || { income: 0, expense: 0, day };
+        if (t.amount > 0) {
+          existing.income += t.amount;
+        } else {
+          existing.expense += Math.abs(t.amount);
+        }
+        dayMap.set(day, existing);
+      }
+    }
+
+    const sortedDays = Array.from(dayMap.keys()).sort((a, b) => a - b);
+    if (sortedDays.length === 0) return [];
+
+    const monthPrefix = timeRange.split(" ")[0].slice(0, 3);
+    const yr = timeRange.split(" ")[1] || "2026";
+    const yrNum = parseInt(yr, 10) || 2026;
+    const mIdx = MONTH_NAMES.indexOf(timeRange.split(" ")[0]);
+
+    const points: MonthData[] = sortedDays.map((d) => {
+      const item = dayMap.get(d)!;
+      return {
+        key: `${yr}-${monthPrefix}-${d}`,
+        monthLabel: `${monthPrefix} ${d}`,
+        fullLabel: `${timeRange.split(" ")[0]} ${d}, ${yr}`,
+        year: yrNum,
+        monthIndex: mIdx >= 0 ? mIdx : 0,
+        income: item.income,
+        expense: item.expense,
+        net: item.income - item.expense,
+      };
+    });
+
+    if (points.length === 1) {
+      const only = points[0];
+      const onlyDay = dayMap.get(sortedDays[0])!.day;
+      const startDay = Math.max(1, onlyDay - 4);
+      const endDay = Math.min(30, onlyDay + 4);
+      return [
+        {
+          key: `${yr}-${monthPrefix}-${startDay}`,
+          monthLabel: `${monthPrefix} ${startDay}`,
+          fullLabel: `${timeRange.split(" ")[0]} ${startDay}, ${yr}`,
+          year: yrNum,
+          monthIndex: mIdx >= 0 ? mIdx : 0,
+          income: 0,
+          expense: 0,
+          net: 0,
+        },
+        only,
+        {
+          key: `${yr}-${monthPrefix}-${endDay}`,
+          monthLabel: `${monthPrefix} ${endDay}`,
+          fullLabel: `${timeRange.split(" ")[0]} ${endDay}, ${yr}`,
+          year: yrNum,
+          monthIndex: mIdx >= 0 ? mIdx : 0,
+          income: 0,
+          expense: 0,
+          net: 0,
+        },
+      ];
+    }
+
+    return points;
+  }, [allMonthlyData, transactions, timeRange]);
 
   // Aggregate totals for the displayed period
   const totalPeriodIncome = filteredMonths.reduce(
@@ -361,11 +468,13 @@ export function SpendingTrend({
               margin: 0,
             }}
           >
-            {incomesOnly
-              ? "Monthly operational inflows, revenue, and capital contributions over time"
-              : expensesOnly
-                ? "Monthly operational debits and outflows over time"
-                : "Monthly cash flow: Income vs. Expenses"}
+            {timeRange === "All time"
+              ? incomesOnly
+                ? "Monthly operational inflows, revenue, and capital contributions over time"
+                : expensesOnly
+                  ? "Monthly operational debits and outflows over time"
+                  : "Monthly cash flow: Income vs. Expenses across all recorded periods"
+              : `Cash flow trend for ${timeRange}: Income vs. Expenses`}
           </p>
         </div>
 
@@ -408,21 +517,16 @@ export function SpendingTrend({
                   marginTop: "6px",
                   backgroundColor: "#FFFFFF",
                   borderRadius: "10px",
-                  boxShadow: "0 10px 25px rgba(0, 0, 0, 0.08)",
+                  boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
                   border: "1px solid #ECEEF2",
                   padding: "4px",
-                  minWidth: "150px",
+                  minWidth: "160px",
+                  maxHeight: "260px",
+                  overflowY: "auto",
                   zIndex: 30,
                 }}
               >
-                {(
-                  [
-                    "Last 6 Months",
-                    "Last 12 Months",
-                    "Year 2026",
-                    "All Months",
-                  ] as const
-                ).map((r) => (
+                {timeframeOptions.map((r) => (
                   <button
                     key={r}
                     onClick={() => {

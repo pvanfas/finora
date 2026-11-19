@@ -10,6 +10,7 @@ export type { User };
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   isLoading: boolean;
   login: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   register: (name: string, email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
@@ -55,12 +56,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const sessionRes = await authClient.getSession();
         if (isMounted && sessionRes?.data?.user) {
           const authUser = sessionRes.data.user;
+          const userRole = (authUser as { role?: string }).role;
+          const isAdmin = userRole === 'admin' || authUser.email === 'admin@gmail.com';
           const mappedUser: User = {
             id: authUser.id,
             name: authUser.name || authUser.email.split('@')[0],
             email: authUser.email,
             avatar: authUser.image || DEFAULT_USER.avatar,
-            role: 'Personal Pro',
+            role: isAdmin ? 'admin' : (userRole === 'user' ? 'Personal Pro' : (userRole || 'Personal Pro')),
           };
           setUser(mappedUser);
           localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mappedUser));
@@ -126,12 +129,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (res?.data?.user) {
         const authUser = res.data.user;
+        const userRole = (authUser as { role?: string }).role;
+        const isAdmin = userRole === 'admin' || authUser.email === 'admin@gmail.com';
         const loggedUser: User = {
           id: authUser.id,
           name: authUser.name || email.split('@')[0],
           email: authUser.email,
           avatar: authUser.image || DEFAULT_USER.avatar,
-          role: 'Personal Pro',
+          role: isAdmin ? 'admin' : (userRole === 'user' ? 'Personal Pro' : (userRole || 'Personal Pro')),
         };
         setUser(loggedUser);
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(loggedUser));
@@ -143,12 +148,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Generic fallback for valid password length (e.g. offline dev environment)
     if (pass.length >= 6) {
+      const isAdmin = email === 'admin@gmail.com';
       const loggedUser: User = {
         id: `usr_${Date.now()}`,
         name: email.split('@')[0].replace('.', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
         email: email,
         avatar: DEFAULT_USER.avatar,
-        role: 'Personal Pro',
+        role: isAdmin ? 'admin' : 'Personal Pro',
       };
       setUser(loggedUser);
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(loggedUser));
@@ -240,11 +246,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .catch((err) => console.warn('[AuthContext] updateUser network error:', err));
   };
 
+  const isAdmin = Boolean(user?.role === 'admin' || user?.email === 'admin@gmail.com');
+
   return (
     <AuthContext.Provider
       value={{
         user,
         isAuthenticated: !!user,
+        isAdmin,
         isLoading,
         login,
         register,

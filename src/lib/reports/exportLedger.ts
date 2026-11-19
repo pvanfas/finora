@@ -10,6 +10,7 @@ export function exportCsvReport(transactions: Transaction[], type: 'ALL' | 'EXPE
     'Date',
     'Description',
     'Category',
+    'Approval Status',
     'Account',
     'Payment Method',
     'Remarks',
@@ -21,6 +22,7 @@ export function exportCsvReport(transactions: Transaction[], type: 'ALL' | 'EXPE
     `"${t.date}"`,
     `"${t.name.replace(/"/g, '""')}"`,
     t.category,
+    t.is_approved ? 'Approved' : 'Pending',
     `"${(t.account || 'Standard General Account').replace(/"/g, '""')}"`,
     `"${(t.paymentMethod || 'Bank Transfer').replace(/"/g, '""')}"`,
     `"${(t.remarks || '').replace(/"/g, '""')}"`,
@@ -163,6 +165,7 @@ export async function exportPdfReport(transactions: Transaction[], type: 'ALL' |
     t.date,
     t.name,
     t.category,
+    t.is_approved ? 'Approved' : 'Pending',
     t.account || 'General Account',
     t.remarks || '—',
     `${t.amount < 0 ? '-' : '+'}INR ${Math.abs(t.amount).toLocaleString('en-IN')}`,
@@ -170,7 +173,7 @@ export async function exportPdfReport(transactions: Transaction[], type: 'ALL' |
 
   autoTable(doc, {
     startY: 132,
-    head: [['Date', 'Description', 'Category', 'Account', 'Remarks', 'Amount']],
+    head: [['Date', 'Description', 'Category', 'Status', 'Account', 'Remarks', 'Amount']],
     body: tableBody,
     margin: { top: 55, bottom: 45, left: 36, right: 36 },
     tableWidth: 'auto',
@@ -192,20 +195,32 @@ export async function exportPdfReport(transactions: Transaction[], type: 'ALL' |
       fillColor: [249, 250, 251],
     },
     columnStyles: {
-      0: { cellWidth: 70 },
+      0: { cellWidth: 65 },
       1: { cellWidth: 'auto' },
-      2: { cellWidth: 65 },
-      3: { cellWidth: 75 },
-      4: { cellWidth: 80 },
-      5: { cellWidth: 80, halign: 'right', fontStyle: 'bold' },
+      2: { cellWidth: 55 },
+      3: { cellWidth: 52 },
+      4: { cellWidth: 70 },
+      5: { cellWidth: 70 },
+      6: { cellWidth: 75, halign: 'right', fontStyle: 'bold' },
     },
     didParseCell: (data) => {
-      if (data.section === 'body' && data.column.index === 5) {
-        const raw = String(data.cell.raw || '');
-        if (raw.startsWith('+')) {
-          data.cell.styles.textColor = [5, 150, 105];
-        } else {
-          data.cell.styles.textColor = [31, 41, 55];
+      if (data.section === 'body') {
+        if (data.column.index === 6) {
+          const raw = String(data.cell.raw || '');
+          if (raw.startsWith('+')) {
+            data.cell.styles.textColor = [5, 150, 105];
+          } else {
+            data.cell.styles.textColor = [31, 41, 55];
+          }
+        } else if (data.column.index === 3) {
+          const raw = String(data.cell.raw || '');
+          if (raw === 'Approved') {
+            data.cell.styles.textColor = [5, 150, 105];
+            data.cell.styles.fontStyle = 'bold';
+          } else {
+            data.cell.styles.textColor = [217, 119, 6];
+            data.cell.styles.fontStyle = 'bold';
+          }
         }
       }
     },
