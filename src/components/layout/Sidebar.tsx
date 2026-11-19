@@ -91,17 +91,22 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               const isActive = pathname === item.href;
               const isExpenseNav = item.href === '/expenses';
               const isIncomeNav = item.href === '/incomes';
+              const isProjectNav = item.href === '/projects';
 
               const activeColor = isExpenseNav
                 ? '#DC2626'
                 : isIncomeNav
                 ? '#10B981'
+                : isProjectNav
+                ? 'var(--primary-accent)'
                 : '#111827';
 
               const activeBg = isExpenseNav
                 ? '#FEF2F2'
                 : isIncomeNav
                 ? '#ECFDF5'
+                : isProjectNav
+                ? 'var(--primary-accent-light)'
                 : '#ECEEF2';
 
               return (
@@ -124,8 +129,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
-                      e.currentTarget.style.backgroundColor = isExpenseNav ? '#FEF2F2' : isIncomeNav ? '#ECFDF5' : '#F6F7FA';
-                      e.currentTarget.style.color = isExpenseNav ? '#DC2626' : isIncomeNav ? '#10B981' : '#111827';
+                      e.currentTarget.style.backgroundColor = isExpenseNav
+                        ? '#FEF2F2'
+                        : isIncomeNav
+                        ? '#ECFDF5'
+                        : isProjectNav
+                        ? 'var(--primary-accent-light)'
+                        : '#F6F7FA';
+                      e.currentTarget.style.color = isExpenseNav
+                        ? '#DC2626'
+                        : isIncomeNav
+                        ? '#10B981'
+                        : isProjectNav
+                        ? 'var(--primary-accent)'
+                        : '#111827';
                     }
                   }}
                   onMouseLeave={(e) => {

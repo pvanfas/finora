@@ -14,6 +14,13 @@ export interface AccountOption {
   category: TransactionCategory;
 }
 
+export interface Project {
+  id: number;
+  name: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Transaction {
   id: string;
   name: string;

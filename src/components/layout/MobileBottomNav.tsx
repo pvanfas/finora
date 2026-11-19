@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   ShoppingCart,
   TrendingUp,
+  FolderKanban,
   FileText,
   Plus,
   Minus,
@@ -25,6 +26,7 @@ export function MobileBottomNav({}: MobileBottomNavProps) {
     { label: 'Dashboard', href: '/', icon: LayoutDashboard },
     { label: 'Expenses', href: '/expenses', icon: ShoppingCart },
     { label: 'Incomes', href: '/incomes', icon: TrendingUp },
+    { label: 'Projects', href: '/projects', icon: FolderKanban },
     { label: 'Reports', href: '/reports', icon: FileText },
   ];
 

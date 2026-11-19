@@ -5,6 +5,7 @@ import {
   DaySpending,
   User,
   TransactionCategory,
+  Project,
 } from '@/types';
 
 try {
@@ -592,4 +593,62 @@ export async function getInitialDashboardData(): Promise<InitialDashboardData> {
     };
   }
 }
+
+/**
+ * Projects CRUD operations
+ */
+export async function getProjects(): Promise<Project[]> {
+  const rows = await withRetry((sql) => sql`
+    SELECT id, name, created_at, updated_at
+    FROM projects
+    ORDER BY id DESC;
+  `);
+
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    createdAt: r.created_at ? new Date(r.created_at).toISOString() : undefined,
+    updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : undefined,
+  }));
+}
+
+export async function createProject(data: { name: string }): Promise<Project> {
+  const trimmed = data.name.trim();
+  const rows = await withRetry((sql) => sql`
+    INSERT INTO projects (name, created_at, updated_at)
+    VALUES (${trimmed}, NOW(), NOW())
+    RETURNING id, name, created_at, updated_at;
+  `);
+  const r = rows[0];
+  return {
+    id: r.id,
+    name: r.name,
+    createdAt: r.created_at ? new Date(r.created_at).toISOString() : undefined,
+    updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : undefined,
+  };
+}
+
+export async function updateProject(id: number, data: { name: string }): Promise<Project | null> {
+  const trimmed = data.name.trim();
+  const rows = await withRetry((sql) => sql`
+    UPDATE projects
+    SET name = ${trimmed}, updated_at = NOW()
+    WHERE id = ${id}
+    RETURNING id, name, created_at, updated_at;
+  `);
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    id: r.id,
+    name: r.name,
+    createdAt: r.created_at ? new Date(r.created_at).toISOString() : undefined,
+    updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : undefined,
+  };
+}
+
+export async function deleteProject(id: number): Promise<boolean> {
+  await withRetry((sql) => sql`DELETE FROM projects WHERE id = ${id};`);
+  return true;
+}
+
 
