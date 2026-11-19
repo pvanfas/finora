@@ -146,6 +146,7 @@ export function TransactionDetailModal({
       }}
       title={isEditing ? 'Edit Transaction' : 'Transaction Details'}
       maxWidth="500px"
+      isStatic={true}
     >
       <div style={{ padding: '16px 20px' }}>
         {/* Subheader Toolbar with Edit & Delete Buttons */}

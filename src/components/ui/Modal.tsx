@@ -27,7 +27,7 @@ export function Modal({
   maxWidth = '520px',
   maxHeight = 'calc(100dvh - 40px)',
   className,
-  isStatic = false,
+  isStatic = true,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const [pulse, setPulse] = React.useState(false);

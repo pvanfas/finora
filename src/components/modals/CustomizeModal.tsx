@@ -23,6 +23,7 @@ export function CustomizeModal() {
       title="Customize Dashboard"
       description="Tailor your dashboard view, accent theme & card layout"
       maxWidth="520px"
+      isStatic={true}
     >
       {/* Tab Navigation */}
       <div
