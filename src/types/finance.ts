@@ -14,15 +14,25 @@ export interface AccountOption {
   category: TransactionCategory;
 }
 
+export type ProjectType = 'govt' | 'corporate' | 'semi govt' | 'startup';
+
 export interface Project {
   id: number;
   name: string;
+  type?: ProjectType | string;
   createdAt?: string;
   updatedAt?: string;
   cashIn?: number;
   cashOut?: number;
   netFlow?: number;
   transactionCount?: number;
+}
+
+export interface TeamUser {
+  id: string;
+  name: string;
+  email: string;
+  role?: string;
 }
 
 export interface Transaction {
@@ -39,6 +49,7 @@ export interface Transaction {
   is_approved?: boolean;
   projectId?: number | null;
   projectName?: string | null;
+  paidBy?: string | null;
 }
 
 export interface BudgetCategory {

@@ -43,6 +43,7 @@ export function AddTransactionModal() {
     expenseAccounts,
     incomeAccounts,
     projects,
+    users,
   } = useDashboard();
 
   const [entryType, setEntryType] = useState<EntryType>("expense");
@@ -51,6 +52,7 @@ export function AddTransactionModal() {
   const displayDateValue = transactionDate || (typeof window !== "undefined" ? getTodayDateInput() : "");
   const [selectedAccount, setSelectedAccount] = useState<string>("");
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [paidBy, setPaidBy] = useState("");
   const [category, setCategory] = useState<TransactionCategory>("OPEX");
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
@@ -75,13 +77,6 @@ export function AddTransactionModal() {
       selectedAccount.toLowerCase().includes("project revenue")
     );
   }, [currentAccounts, selectedAccount]);
-
-  const isProjectExpense = useMemo(() => {
-    if (entryType !== "expense") return false;
-    return category === "PROJECT" || selectedAccount.toLowerCase().includes("project");
-  }, [entryType, category, selectedAccount]);
-
-  const showProjectSelector = isProjectRevenue || isProjectExpense;
 
   const handleEntryTypeChange = (type: EntryType) => {
     setEntryType(type);
@@ -195,7 +190,7 @@ export function AddTransactionModal() {
     let projectId: number | undefined = undefined;
     let projectName: string | undefined = undefined;
 
-    if ((isProjectRevenue || isProjectExpense || selectedProjectId) && selectedProjectId) {
+    if (isProjectRevenue && selectedProjectId) {
       const chosen = projects.find((p) => String(p.id) === String(selectedProjectId));
       if (chosen) {
         projectId = chosen.id;
@@ -215,11 +210,13 @@ export function AddTransactionModal() {
       is_approved: false, // Default is false, only admin can approve
       projectId,
       projectName,
+      paidBy: entryType === "expense" && paidBy ? paidBy.trim() : undefined,
     });
 
     setName("");
     setAmount("");
     setRemarks("");
+    setPaidBy("");
     setSelectedProjectId("");
     setTransactionDate(getTodayDateInput());
     setIsAddTransactionOpen(false);
@@ -359,18 +356,16 @@ export function AddTransactionModal() {
           </select>
         </div>
 
-        {/* Project Selection / Tagging (Active when 4000 Revenue or Project Expense) */}
-        {showProjectSelector && (
+        {/* Project Selection / Tagging (Active when Account / Classification is 4000 - Project Revenue) */}
+        {isProjectRevenue && (
           <div
             style={{
               marginBottom: "18px",
               padding: "14px 16px",
               borderRadius: "14px",
-              backgroundColor: isProjectRevenue ? "#F0FDF4" : "#FFF7ED",
-              border: isProjectRevenue ? "1.5px solid #BBF7D0" : "1.5px solid #FED7AA",
-              boxShadow: isProjectRevenue
-                ? "0 2px 8px rgba(22, 163, 74, 0.08)"
-                : "0 2px 8px rgba(234, 88, 12, 0.08)",
+              backgroundColor: "#F0FDF4",
+              border: "1.5px solid #BBF7D0",
+              boxShadow: "0 2px 8px rgba(22, 163, 74, 0.08)",
             }}
           >
             <div
@@ -388,10 +383,10 @@ export function AddTransactionModal() {
                   gap: "6px",
                   fontSize: "13px",
                   fontWeight: 700,
-                  color: isProjectRevenue ? "#166534" : "#9A3412",
+                  color: "#166534",
                 }}
               >
-                <FolderKanban size={15} color={isProjectRevenue ? "#16A34A" : "#EA580C"} />
+                <FolderKanban size={15} color="#16A34A" />
                 <span>Tag Project</span>
                 <span
                   style={{
@@ -399,12 +394,12 @@ export function AddTransactionModal() {
                     fontWeight: 700,
                     padding: "2px 7px",
                     borderRadius: "9999px",
-                    backgroundColor: isProjectRevenue ? "#DCFCE7" : "#FFEDD5",
-                    color: isProjectRevenue ? "#15803D" : "#C2410C",
-                    border: isProjectRevenue ? "1px solid #BBF7D0" : "1px solid #FDBA74",
+                    backgroundColor: "#DCFCE7",
+                    color: "#15803D",
+                    border: "1px solid #BBF7D0",
                   }}
                 >
-                  {isProjectRevenue ? "4000 Revenue (Cash In)" : "Project Expense (Cash Out)"}
+                  4000 Revenue
                 </span>
               </label>
 
@@ -415,7 +410,7 @@ export function AddTransactionModal() {
                 style={{
                   fontSize: "12px",
                   fontWeight: 600,
-                  color: isProjectRevenue ? "#15803D" : "#EA580C",
+                  color: "#15803D",
                   textDecoration: "none",
                   display: "inline-flex",
                   alignItems: "center",
@@ -588,6 +583,48 @@ export function AddTransactionModal() {
             <option value="Cash">Cash</option>
           </select>
         </div>
+
+        {/* Paid by (Cash Out / Expense only) */}
+        {entryType === "expense" && (
+          <div style={{ marginBottom: "16px" }}>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                fontSize: "13px",
+                fontWeight: 600,
+                color: "#374151",
+                marginBottom: "6px",
+              }}
+            >
+              <span>Paid by</span>
+              <span style={{ color: "#9CA3AF", fontWeight: 400 }}>(Team Member)</span>
+            </label>
+            <select
+              value={paidBy}
+              onChange={(e) => setPaidBy(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "11px 14px",
+                borderRadius: "12px",
+                border: "1px solid #D1D5DB",
+                fontSize: "14px",
+                color: paidBy ? "#111827" : "#6B7280",
+                backgroundColor: "#FFFFFF",
+                outline: "none",
+                cursor: "pointer",
+              }}
+            >
+              <option value="">-- Select user who paid --</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.name || u.email}>
+                  👤 {u.name || u.email}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Remarks (Optional) */}
         <div style={{ marginBottom: "20px" }}>

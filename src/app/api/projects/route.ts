@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name } = body as { name?: string };
+    const { name, type } = body as { name?: string; type?: string };
 
     if (!name || !name.trim()) {
       return NextResponse.json(
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const project = await createProject({ name: name.trim() });
+    const project = await createProject({ name: name.trim(), type: type?.trim() });
     try {
       revalidateTag('dashboard', 'seconds');
     } catch {}
@@ -92,7 +92,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    const { id, name } = body as { id?: number | string; name?: string };
+    const { id, name, type } = body as { id?: number | string; name?: string; type?: string };
 
     const numId = typeof id === 'number' ? id : parseInt(String(id), 10);
     if (isNaN(numId) || numId <= 0) {
@@ -102,14 +102,17 @@ export async function PUT(request: Request) {
       );
     }
 
-    if (!name || !name.trim()) {
+    if (!name && !type) {
       return NextResponse.json(
-        { success: false, error: 'Project name is required' },
+        { success: false, error: 'Project name or type is required' },
         { status: 400 }
       );
     }
 
-    const updated = await updateProject(numId, { name: name.trim() });
+    const updated = await updateProject(numId, {
+      name: name !== undefined ? name.trim() : undefined,
+      type: type !== undefined ? type.trim() : undefined,
+    });
     if (!updated) {
       return NextResponse.json(
         { success: false, error: `Project #${numId} not found` },
@@ -161,9 +164,11 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true, deletedId: numId });
   } catch (error) {
     console.error('DELETE /api/projects error:', error);
+    const msg = (error as Error).message || 'Failed to delete project';
+    const isConstraint = msg.includes('attached to it') || msg.includes('transaction');
     return NextResponse.json(
-      { success: false, error: (error as Error).message || 'Failed to delete project' },
-      { status: 500 }
+      { success: false, error: msg },
+      { status: isConstraint ? 400 : 500 }
     );
   }
 }

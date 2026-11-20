@@ -167,7 +167,7 @@ export async function getSettings() {
 
 export async function getTransactions(): Promise<Transaction[]> {
   const rows = await withRetry((sql) => sql`
-    SELECT id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, project_id, project_name
+    SELECT id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, project_id, project_name, paid_by
     FROM transactions
     ORDER BY created_at DESC;
   `);
@@ -186,6 +186,7 @@ export async function getTransactions(): Promise<Transaction[]> {
     is_approved: r.is_approved !== null && r.is_approved !== undefined ? Boolean(r.is_approved) : false,
     projectId: r.project_id !== null && r.project_id !== undefined ? Number(r.project_id) : undefined,
     projectName: r.project_name || undefined,
+    paidBy: r.paid_by || undefined,
   }));
 }
 
@@ -203,6 +204,7 @@ export async function addTransaction(tx: {
   is_approved?: boolean;
   projectId?: number | null;
   projectName?: string | null;
+  paidBy?: string | null;
 }): Promise<Transaction> {
   const id = tx.id || `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   const title = tx.title || tx.name || 'Expense';
@@ -215,10 +217,11 @@ export async function addTransaction(tx: {
   const isApproved = tx.is_approved !== undefined ? Boolean(tx.is_approved) : false;
   const projectId = tx.projectId !== undefined && tx.projectId !== null ? Number(tx.projectId) : null;
   const projectName = tx.projectName ? String(tx.projectName).trim() : null;
+  const paidBy = tx.paidBy ? String(tx.paidBy).trim() : null;
 
   await withRetry((sql) => sql`
-    INSERT INTO transactions (id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, project_id, project_name, created_at)
-    VALUES (${id}, ${title}, ${category}, ${amount}, ${transactionDate}, ${account}, ${paymentMethod}, ${remarks}, ${isApproved}, ${projectId}, ${projectName}, NOW());
+    INSERT INTO transactions (id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, project_id, project_name, paid_by, created_at)
+    VALUES (${id}, ${title}, ${category}, ${amount}, ${transactionDate}, ${account}, ${paymentMethod}, ${remarks}, ${isApproved}, ${projectId}, ${projectName}, ${paidBy}, NOW());
   `);
 
   return {
@@ -235,6 +238,7 @@ export async function addTransaction(tx: {
     is_approved: isApproved,
     projectId: projectId || undefined,
     projectName: projectName || undefined,
+    paidBy: paidBy || undefined,
   };
 }
 
@@ -258,6 +262,7 @@ export async function updateTransaction(
     is_approved?: boolean;
     projectId?: number | null;
     projectName?: string | null;
+    paidBy?: string | null;
   }
 ): Promise<Transaction | null> {
   const title = tx.title ?? tx.name ?? null;
@@ -267,6 +272,8 @@ export async function updateTransaction(
   const projectId = tx.projectId !== undefined && tx.projectId !== null ? Number(tx.projectId) : null;
   const hasProjectName = tx.projectName !== undefined;
   const projectName = tx.projectName !== undefined && tx.projectName !== null ? String(tx.projectName).trim() : null;
+  const hasPaidBy = tx.paidBy !== undefined;
+  const paidBy = tx.paidBy !== undefined && tx.paidBy !== null ? String(tx.paidBy).trim() : null;
 
   const rows = await withRetry((sql) => sql`
     UPDATE transactions
@@ -280,9 +287,10 @@ export async function updateTransaction(
       remarks = COALESCE(${tx.remarks ?? null}, remarks),
       is_approved = COALESCE(${isApproved}, is_approved),
       project_id = ${hasProjectId ? projectId : sql`project_id`},
-      project_name = ${hasProjectName ? projectName : sql`project_name`}
+      project_name = ${hasProjectName ? projectName : sql`project_name`},
+      paid_by = ${hasPaidBy ? paidBy : sql`paid_by`}
     WHERE id = ${id}
-    RETURNING id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, project_id, project_name;
+    RETURNING id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, project_id, project_name, paid_by;
   `);
 
   if (rows.length === 0) return null;
@@ -301,6 +309,7 @@ export async function updateTransaction(
     is_approved: r.is_approved !== null && r.is_approved !== undefined ? Boolean(r.is_approved) : false,
     projectId: r.project_id !== null && r.project_id !== undefined ? Number(r.project_id) : undefined,
     projectName: r.project_name || undefined,
+    paidBy: r.paid_by || undefined,
   };
 }
 
@@ -657,10 +666,37 @@ async function ensureProjectsTable() {
     CREATE TABLE IF NOT EXISTS projects (
       id SERIAL PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
+      type VARCHAR(50) DEFAULT 'corporate',
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
   `);
+}
+
+export async function getAllUsers(): Promise<Array<{ id: string; name: string; email: string; role?: string }>> {
+  try {
+    const rows = await withRetry((sql) => sql`
+      SELECT id, name, email, role
+      FROM neon_auth.user
+      ORDER BY name ASC;
+    `);
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name || r.email,
+      email: r.email,
+      role: r.role,
+    }));
+  } catch (err) {
+    console.warn('Failed to get users from neon_auth.user:', err);
+    return [
+      { id: 'usr-1', name: 'Admin', email: 'admin@gmail.com', role: 'admin' },
+      { id: 'usr-2', name: 'Anfas PV', email: 'anfaspv.info@gmail.com', role: 'user' },
+      { id: 'usr-3', name: 'Fahim Ahmed', email: 'pvfahim@gmail.com', role: 'user' },
+      { id: 'usr-4', name: 'Fasil Firos', email: 'fasilfiroz@gmail.com', role: 'user' },
+      { id: 'usr-5', name: 'Shahbas Ahmed PE', email: 'shahbasahmedpe@gmail.com', role: 'user' },
+      { id: 'usr-6', name: 'Shuhaib', email: 'shuhaib@gmail.com', role: 'user' },
+    ];
+  }
 }
 
 export async function getProjects(): Promise<Project[]> {
@@ -669,6 +705,7 @@ export async function getProjects(): Promise<Project[]> {
       SELECT
         p.id,
         p.name,
+        COALESCE(p.type, 'corporate') AS type,
         p.created_at,
         p.updated_at,
         COALESCE(SUM(CASE WHEN t.amount > 0 THEN t.amount ELSE 0 END), 0) AS cash_in,
@@ -679,7 +716,7 @@ export async function getProjects(): Promise<Project[]> {
         t.project_id = p.id
         OR (t.project_id IS NULL AND LOWER(TRIM(t.project_name)) = LOWER(TRIM(p.name)))
       )
-      GROUP BY p.id, p.name, p.created_at, p.updated_at
+      GROUP BY p.id, p.name, p.type, p.created_at, p.updated_at
       ORDER BY p.id DESC;
     `);
 
@@ -689,6 +726,7 @@ export async function getProjects(): Promise<Project[]> {
       return {
         id: r.id,
         name: r.name,
+        type: r.type || 'corporate',
         createdAt: r.created_at ? new Date(r.created_at).toISOString() : undefined,
         updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : undefined,
         cashIn,
@@ -707,61 +745,96 @@ export async function getProjects(): Promise<Project[]> {
   }
 }
 
-export async function createProject(data: { name: string }): Promise<Project> {
+export async function createProject(data: { name: string; type?: string }): Promise<Project> {
   const trimmed = data.name.trim();
+  const type = data.type?.trim().toLowerCase() || 'corporate';
   try {
     const rows = await withRetry((sql) => sql`
-      INSERT INTO projects (name, created_at, updated_at)
-      VALUES (${trimmed}, NOW(), NOW())
-      RETURNING id, name, created_at, updated_at;
+      INSERT INTO projects (name, type, created_at, updated_at)
+      VALUES (${trimmed}, ${type}, NOW(), NOW())
+      RETURNING id, name, type, created_at, updated_at;
     `);
     const r = rows[0];
     return {
       id: r.id,
       name: r.name,
+      type: r.type || type,
       createdAt: r.created_at ? new Date(r.created_at).toISOString() : undefined,
       updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : undefined,
+      cashIn: 0,
+      cashOut: 0,
+      netFlow: 0,
+      transactionCount: 0,
     };
   } catch (err) {
     const msg = (err as Error)?.message || String(err);
     if (msg.includes('relation "projects" does not exist') || (err as { code?: string })?.code === '42P01') {
       await ensureProjectsTable();
       const rows = await withRetry((sql) => sql`
-        INSERT INTO projects (name, created_at, updated_at)
-        VALUES (${trimmed}, NOW(), NOW())
-        RETURNING id, name, created_at, updated_at;
+        INSERT INTO projects (name, type, created_at, updated_at)
+        VALUES (${trimmed}, ${type}, NOW(), NOW())
+        RETURNING id, name, type, created_at, updated_at;
       `);
       const r = rows[0];
       return {
         id: r.id,
         name: r.name,
+        type: r.type || type,
         createdAt: r.created_at ? new Date(r.created_at).toISOString() : undefined,
         updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : undefined,
+        cashIn: 0,
+        cashOut: 0,
+        netFlow: 0,
+        transactionCount: 0,
       };
     }
     throw err;
   }
 }
 
-export async function updateProject(id: number, data: { name: string }): Promise<Project | null> {
-  const trimmed = data.name.trim();
+export async function updateProject(id: number, data: { name?: string; type?: string }): Promise<Project | null> {
+  const trimmed = data.name !== undefined ? data.name.trim() : null;
+  const type = data.type !== undefined ? data.type.trim().toLowerCase() : null;
+
   const rows = await withRetry((sql) => sql`
     UPDATE projects
-    SET name = ${trimmed}, updated_at = NOW()
+    SET
+      name = COALESCE(${trimmed}, name),
+      type = COALESCE(${type}, type),
+      updated_at = NOW()
     WHERE id = ${id}
-    RETURNING id, name, created_at, updated_at;
+    RETURNING id, name, type, created_at, updated_at;
   `);
   if (rows.length === 0) return null;
   const r = rows[0];
   return {
     id: r.id,
     name: r.name,
+    type: r.type || 'corporate',
     createdAt: r.created_at ? new Date(r.created_at).toISOString() : undefined,
     updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : undefined,
   };
 }
 
 export async function deleteProject(id: number): Promise<boolean> {
+  const projRows = await withRetry((sql) => sql`SELECT id, name FROM projects WHERE id = ${id};`);
+  if (projRows.length === 0) return false;
+  const projName = projRows[0].name;
+
+  // Make sure no transactions are attached before deleting
+  const countRows = await withRetry((sql) => sql`
+    SELECT COUNT(*) AS count
+    FROM transactions
+    WHERE project_id = ${id}
+       OR (project_id IS NULL AND LOWER(TRIM(project_name)) = LOWER(TRIM(${projName})));
+  `);
+  const txCount = Number(countRows[0]?.count) || 0;
+  if (txCount > 0) {
+    throw new Error(
+      `Cannot delete project "${projName}" because it has ${txCount} transaction(s) attached to it. Please reassign or delete the transactions first.`
+    );
+  }
+
   await withRetry((sql) => sql`DELETE FROM projects WHERE id = ${id};`);
   return true;
 }

@@ -70,6 +70,7 @@ export async function POST(request: Request) {
       is_approved: false, // Default is false; only admins can approve
       projectId: body.projectId !== undefined && body.projectId !== null ? Number(body.projectId) : undefined,
       projectName: body.projectName !== undefined && body.projectName !== null ? String(body.projectName).trim() : undefined,
+      paidBy: (body.paidBy as string) || (body.paid_by as string) || undefined,
     });
 
     try {
@@ -139,6 +140,10 @@ export async function PUT(request: Request) {
         );
       }
       updates.amount = parsed;
+    }
+
+    if (updates.paid_by !== undefined && updates.paidBy === undefined) {
+      updates.paidBy = updates.paid_by;
     }
 
     const updated = await updateTransaction(id, updates as Parameters<typeof updateTransaction>[1]);

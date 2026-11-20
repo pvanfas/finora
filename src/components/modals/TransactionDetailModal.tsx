@@ -11,14 +11,13 @@ import {
   Landmark,
   Tag,
   Hash,
-  ArrowDownLeft,
-  ArrowUpRight,
   Save,
   X,
   FileText,
   Clock,
   ShieldCheck,
   FolderKanban,
+  User,
 } from 'lucide-react';
 import { Modal, Button, Input } from '@/components/ui';
 import { Transaction, TransactionCategory } from '@/types';
@@ -37,7 +36,7 @@ export function TransactionDetailModal({
   isOpen,
   onClose,
 }: TransactionDetailModalProps) {
-  const { updateTransaction, deleteTransaction, expenseAccounts, incomeAccounts, projects } = useDashboard();
+  const { updateTransaction, deleteTransaction, expenseAccounts, incomeAccounts, projects, users } = useDashboard();
   const { isAdmin } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
@@ -55,6 +54,7 @@ export function TransactionDetailModal({
   const [editPaymentMethod, setEditPaymentMethod] = useState('');
   const [editDate, setEditDate] = useState('');
   const [editRemarks, setEditRemarks] = useState('');
+  const [editPaidBy, setEditPaidBy] = useState('');
   const [editIsApproved, setEditIsApproved] = useState(false);
 
   // Sync edit form when opening or changing transaction
@@ -69,6 +69,7 @@ export function TransactionDetailModal({
     setEditPaymentMethod(transaction.paymentMethod || 'Bank Transfer');
     setEditDate(transaction.date);
     setEditRemarks(transaction.remarks || '');
+    setEditPaidBy(transaction.paidBy || '');
     setEditIsApproved(Boolean(transaction.is_approved));
     setIsEditing(false);
     setShowDeleteConfirm(false);
@@ -136,6 +137,7 @@ export function TransactionDetailModal({
       remarks: editRemarks.trim() || undefined,
       projectId: isEditProjectRevenue ? (chosenProject ? chosenProject.id : null) : null,
       projectName: isEditProjectRevenue ? (chosenProject ? chosenProject.name : null) : null,
+      paidBy: isExpense ? (editPaidBy.trim() || null) : null,
     };
 
     if (isAdmin) {
@@ -174,35 +176,7 @@ export function TransactionDetailModal({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                padding: '4px 10px',
-                borderRadius: '9999px',
-                fontSize: '11.5px',
-                fontWeight: 700,
-                backgroundColor: isExpense ? '#FEF2F2' : '#ECFDF5',
-                color: isExpense ? '#DC2626' : '#16A34A',
-                border: isExpense ? '1px solid #FEE2E2' : '1px solid #D1FAE5',
-              }}
-            >
-              {isExpense ? <ArrowDownLeft size={13} /> : <ArrowUpRight size={13} />}
-              {isExpense ? 'Outflow (Expense)' : 'Inflow (Income)'}
-            </span>
-            <span
-              style={{
-                fontSize: '11.5px',
-                fontWeight: 600,
-                color: '#6B7280',
-                backgroundColor: '#F3F4F6',
-                padding: '4px 8px',
-                borderRadius: '6px',
-              }}
-            >
-              {transaction.category}
-            </span>
+           
             {transaction.is_approved ? (
               <span
                 style={{
@@ -243,32 +217,6 @@ export function TransactionDetailModal({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {isAdmin && !transaction.is_approved && !isEditing && (
-              <button
-                type="button"
-                onClick={handleApprove}
-                disabled={isApproving}
-                title="Approve this transaction (Admin only)"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  padding: '6px 12px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  backgroundColor: '#16A34A',
-                  color: '#FFFFFF',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                  boxShadow: '0 1px 2px rgba(22, 163, 74, 0.25)',
-                }}
-              >
-                <Check size={13} strokeWidth={2.5} />
-                <span>{isApproving ? 'Approving...' : 'Approve'}</span>
-              </button>
-            )}
             <button
               type="button"
               onClick={() => {
@@ -633,7 +581,7 @@ export function TransactionDetailModal({
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <FolderKanban size={13} color="#16A34A" />
-                      <span>TAGGED PROJECT</span>
+                      <span>TAGGED PROJECT (4000 REVENUE)</span>
                     </div>
                   </div>
                   <div
@@ -668,6 +616,55 @@ export function TransactionDetailModal({
                     ) : (
                       <span style={{ fontStyle: 'italic', fontSize: '12.5px', color: '#6B7280' }}>
                         No specific project tagged yet
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Paid By (Active for Cash Out / Expenses) */}
+              {(isExpense || Boolean(transaction.paidBy)) && (
+                <div
+                  style={{
+                    gridColumn: 'span 2',
+                    padding: '10px 12px',
+                    backgroundColor: '#F8FAFC',
+                    borderRadius: '10px',
+                    border: '1px solid #E2E8F0',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: '#475569',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    <User size={13} color="#64748B" />
+                    <span>PAID BY</span>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '13.5px',
+                      fontWeight: 700,
+                      color: transaction.paidBy ? '#0F172A' : '#94A3B8',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    {transaction.paidBy ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '14px' }}>👤</span>
+                        <span>{transaction.paidBy}</span>
+                      </span>
+                    ) : (
+                      <span style={{ fontStyle: 'italic', fontSize: '12.5px', color: '#94A3B8' }}>
+                        Not specified
                       </span>
                     )}
                   </div>
@@ -1039,6 +1036,43 @@ export function TransactionDetailModal({
                   <option value="Cheque">Cheque</option>
                 </select>
               </div>
+
+              {isExpense && (
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#374151',
+                      marginBottom: '6px',
+                    }}
+                  >
+                    Paid by
+                  </label>
+                  <select
+                    value={editPaidBy}
+                    onChange={(e) => setEditPaidBy(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #E5E7EB',
+                      backgroundColor: '#FFFFFF',
+                      fontSize: '13.5px',
+                      color: '#111827',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="">-- Select user who paid --</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.name || u.email}>
+                        👤 {u.name || u.email}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label

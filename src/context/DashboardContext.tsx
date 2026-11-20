@@ -10,12 +10,14 @@ import {
   AccountOption,
   TransactionCategory,
   Project,
+  TeamUser,
 } from '@/types';
 import {
   CURRENCY_SYMBOL,
   DEFAULT_MONTHLY_BUDGET,
   DEFAULT_SAVINGS_GROWTH,
   ACCENT_THEMES,
+  DEFAULT_TEAM_USERS,
 } from '@/constants';
 import { formatINR, parseTxDate, applyThemeToDOM, persistTheme, getInitialTheme } from '@/lib';
 import { useAuth } from '@/context/AuthContext';
@@ -91,6 +93,10 @@ interface DashboardContextType {
   projects: Project[];
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   refreshProjects: () => Promise<void>;
+
+  // Team Users State
+  users: TeamUser[];
+  refreshUsers: () => Promise<void>;
 
   // Modals & Theme
   isCustomizeOpen: boolean;
@@ -172,6 +178,21 @@ export function DashboardProvider({
     }
   };
 
+  const [users, setUsers] = useState<TeamUser[]>(DEFAULT_TEAM_USERS);
+
+  const refreshUsers = async () => {
+    try {
+      const res = await fetch('/api/users');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.success && Array.isArray(data.users)) {
+        setUsers(data.users);
+      }
+    } catch (err) {
+      console.warn('[DashboardContext] refreshUsers network error:', err);
+    }
+  };
+
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
   const [addTransactionType, setAddTransactionType] = useState<'expense' | 'income'>('expense');
@@ -249,14 +270,16 @@ export function DashboardProvider({
 
     async function loadInitialData() {
       try {
-        const [dataRes, accountsRes] = await Promise.all([
-          fetch('/api/data').then((r) => r.json()),
-          fetch('/api/accounts').then((r) => r.json()),
+        const [dataRes, accountsRes, projectsRes, usersRes] = await Promise.all([
+          fetch('/api/data').then((r) => r.json()).catch(() => null),
+          fetch('/api/accounts').then((r) => r.json()).catch(() => null),
+          fetch('/api/projects').then((r) => r.json()).catch(() => null),
+          fetch('/api/users').then((r) => r.json()).catch(() => null),
         ]);
 
         if (!isMounted) return;
 
-        if (dataRes.success && dataRes.data) {
+        if (dataRes?.success && dataRes.data) {
           if (Array.isArray(dataRes.data.transactions)) {
             setTransactions(dataRes.data.transactions);
           }
@@ -268,7 +291,7 @@ export function DashboardProvider({
           }
         }
 
-        if (accountsRes.success) {
+        if (accountsRes?.success) {
           if (Array.isArray(accountsRes.expenseAccounts)) {
             setExpenseAccounts(
               accountsRes.expenseAccounts.map((a: ApiAccountItem) => ({
@@ -293,6 +316,14 @@ export function DashboardProvider({
               }))
             );
           }
+        }
+
+        if (projectsRes?.success && Array.isArray(projectsRes.data)) {
+          setProjects(projectsRes.data);
+        }
+
+        if (usersRes?.success && Array.isArray(usersRes.users)) {
+          setUsers(usersRes.users);
         }
       } catch {
         // Fail-safe
@@ -560,6 +591,9 @@ export function DashboardProvider({
         projects,
         setProjects,
         refreshProjects,
+
+        users,
+        refreshUsers,
 
         isCustomizeOpen,
         setIsCustomizeOpen,
