@@ -19,6 +19,10 @@ export interface Project {
   name: string;
   createdAt?: string;
   updatedAt?: string;
+  cashIn?: number;
+  cashOut?: number;
+  netFlow?: number;
+  transactionCount?: number;
 }
 
 export interface Transaction {

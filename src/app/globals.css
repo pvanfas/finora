@@ -859,6 +859,36 @@ input, select, textarea {
   }
 }
 
+.project-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .project-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .project-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .project-stat-card {
+    padding: 12px 14px !important;
+  }
+  .project-stat-value {
+    font-size: 17px !important;
+  }
+  .project-stat-icon {
+    display: none !important;
+  }
+}
+
+
 
 
 

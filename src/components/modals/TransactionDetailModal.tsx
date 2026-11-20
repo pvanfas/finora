@@ -633,7 +633,7 @@ export function TransactionDetailModal({
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <FolderKanban size={13} color="#16A34A" />
-                      <span>TAGGED PROJECT (4000 REVENUE)</span>
+                      <span>TAGGED PROJECT</span>
                     </div>
                   </div>
                   <div

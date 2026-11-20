@@ -666,17 +666,37 @@ async function ensureProjectsTable() {
 export async function getProjects(): Promise<Project[]> {
   try {
     const rows = await withRetry((sql) => sql`
-      SELECT id, name, created_at, updated_at
-      FROM projects
-      ORDER BY id DESC;
+      SELECT
+        p.id,
+        p.name,
+        p.created_at,
+        p.updated_at,
+        COALESCE(SUM(CASE WHEN t.amount > 0 THEN t.amount ELSE 0 END), 0) AS cash_in,
+        COALESCE(SUM(CASE WHEN t.amount < 0 THEN ABS(t.amount) ELSE 0 END), 0) AS cash_out,
+        COUNT(t.id) AS transaction_count
+      FROM projects p
+      LEFT JOIN transactions t ON (
+        t.project_id = p.id
+        OR (t.project_id IS NULL AND LOWER(TRIM(t.project_name)) = LOWER(TRIM(p.name)))
+      )
+      GROUP BY p.id, p.name, p.created_at, p.updated_at
+      ORDER BY p.id DESC;
     `);
 
-    return rows.map((r) => ({
-      id: r.id,
-      name: r.name,
-      createdAt: r.created_at ? new Date(r.created_at).toISOString() : undefined,
-      updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : undefined,
-    }));
+    return rows.map((r) => {
+      const cashIn = Number(r.cash_in) || 0;
+      const cashOut = Number(r.cash_out) || 0;
+      return {
+        id: r.id,
+        name: r.name,
+        createdAt: r.created_at ? new Date(r.created_at).toISOString() : undefined,
+        updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : undefined,
+        cashIn,
+        cashOut,
+        netFlow: cashIn - cashOut,
+        transactionCount: Number(r.transaction_count) || 0,
+      };
+    });
   } catch (err) {
     const msg = (err as Error)?.message || String(err);
     if (msg.includes('relation "projects" does not exist') || (err as { code?: string })?.code === '42P01') {

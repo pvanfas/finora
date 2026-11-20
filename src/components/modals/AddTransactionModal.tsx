@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { usePathname } from "next/navigation";
-import { Plus, ArrowUpRight, ArrowDownRight, FolderKanban, Sparkles } from "lucide-react";
+import { Plus, ArrowUpRight, ArrowDownRight, FolderKanban } from "lucide-react";
 import { useDashboard } from "@/context/DashboardContext";
 import { Modal, Button, Input } from "@/components/ui";
 import { TransactionCategory } from "@/types";
@@ -75,6 +75,13 @@ export function AddTransactionModal() {
       selectedAccount.toLowerCase().includes("project revenue")
     );
   }, [currentAccounts, selectedAccount]);
+
+  const isProjectExpense = useMemo(() => {
+    if (entryType !== "expense") return false;
+    return category === "PROJECT" || selectedAccount.toLowerCase().includes("project");
+  }, [entryType, category, selectedAccount]);
+
+  const showProjectSelector = isProjectRevenue || isProjectExpense;
 
   const handleEntryTypeChange = (type: EntryType) => {
     setEntryType(type);
@@ -188,7 +195,7 @@ export function AddTransactionModal() {
     let projectId: number | undefined = undefined;
     let projectName: string | undefined = undefined;
 
-    if (isProjectRevenue && selectedProjectId) {
+    if ((isProjectRevenue || isProjectExpense || selectedProjectId) && selectedProjectId) {
       const chosen = projects.find((p) => String(p.id) === String(selectedProjectId));
       if (chosen) {
         projectId = chosen.id;
@@ -352,16 +359,18 @@ export function AddTransactionModal() {
           </select>
         </div>
 
-        {/* Project Selection / Tagging (Active when Account / Classification is 4000 - Project Revenue) */}
-        {isProjectRevenue && (
+        {/* Project Selection / Tagging (Active when 4000 Revenue or Project Expense) */}
+        {showProjectSelector && (
           <div
             style={{
               marginBottom: "18px",
               padding: "14px 16px",
               borderRadius: "14px",
-              backgroundColor: "#F0FDF4",
-              border: "1.5px solid #BBF7D0",
-              boxShadow: "0 2px 8px rgba(22, 163, 74, 0.08)",
+              backgroundColor: isProjectRevenue ? "#F0FDF4" : "#FFF7ED",
+              border: isProjectRevenue ? "1.5px solid #BBF7D0" : "1.5px solid #FED7AA",
+              boxShadow: isProjectRevenue
+                ? "0 2px 8px rgba(22, 163, 74, 0.08)"
+                : "0 2px 8px rgba(234, 88, 12, 0.08)",
             }}
           >
             <div
@@ -379,10 +388,10 @@ export function AddTransactionModal() {
                   gap: "6px",
                   fontSize: "13px",
                   fontWeight: 700,
-                  color: "#166534",
+                  color: isProjectRevenue ? "#166534" : "#9A3412",
                 }}
               >
-                <FolderKanban size={15} color="#16A34A" />
+                <FolderKanban size={15} color={isProjectRevenue ? "#16A34A" : "#EA580C"} />
                 <span>Tag Project</span>
                 <span
                   style={{
@@ -390,12 +399,12 @@ export function AddTransactionModal() {
                     fontWeight: 700,
                     padding: "2px 7px",
                     borderRadius: "9999px",
-                    backgroundColor: "#DCFCE7",
-                    color: "#15803D",
-                    border: "1px solid #BBF7D0",
+                    backgroundColor: isProjectRevenue ? "#DCFCE7" : "#FFEDD5",
+                    color: isProjectRevenue ? "#15803D" : "#C2410C",
+                    border: isProjectRevenue ? "1px solid #BBF7D0" : "1px solid #FDBA74",
                   }}
                 >
-                  4000 Revenue
+                  {isProjectRevenue ? "4000 Revenue (Cash In)" : "Project Expense (Cash Out)"}
                 </span>
               </label>
 
@@ -406,7 +415,7 @@ export function AddTransactionModal() {
                 style={{
                   fontSize: "12px",
                   fontWeight: 600,
-                  color: "#15803D",
+                  color: isProjectRevenue ? "#15803D" : "#EA580C",
                   textDecoration: "none",
                   display: "inline-flex",
                   alignItems: "center",
@@ -448,27 +457,13 @@ export function AddTransactionModal() {
                 cursor: "pointer",
               }}
             >
-              <option value="">-- Select Project (Optional or Recommended) --</option>
+              <option value="">Select Project</option>
               {projects.map((proj) => (
                 <option key={proj.id} value={proj.id}>
                   📁 {proj.name}
                 </option>
               ))}
             </select>
-
-            <div
-              style={{
-                fontSize: "11.5px",
-                color: "#15803D",
-                marginTop: "6px",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              <Sparkles size={12} color="#16A34A" />
-              <span>Tagging a project tracks revenue and profitability under that project.</span>
-            </div>
           </div>
         )}
 
