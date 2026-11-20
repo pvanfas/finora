@@ -127,11 +127,17 @@ export function TransactionDetailModal({
       ? projects.find((p) => String(p.id) === String(editProjectId))
       : null;
 
+    const resolvedEditDate = editDate.trim() && editDate.trim().toLowerCase() !== 'today'
+      ? editDate.trim()
+      : (transaction.date && transaction.date.toLowerCase() !== 'today'
+          ? transaction.date
+          : new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }));
+
     const updates: Partial<Transaction> = {
       name: editName.trim(),
       category: editCategory,
       amount: finalAmount,
-      date: editDate.trim() || transaction.date,
+      date: resolvedEditDate,
       account: editAccount.trim() || transaction.account,
       paymentMethod: editPaymentMethod.trim() || transaction.paymentMethod,
       remarks: editRemarks.trim() || undefined,

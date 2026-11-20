@@ -210,7 +210,14 @@ export async function addTransaction(tx: {
 }): Promise<Transaction> {
   const id = tx.id || `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   const title = tx.title || tx.name || 'Expense';
-  const transactionDate = tx.transactionDate || tx.date || 'Today';
+  const now = new Date();
+  const defaultDate = now.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const rawDate = tx.transactionDate || tx.date;
+  const transactionDate = rawDate && rawDate.trim().toLowerCase() !== 'today' ? rawDate.trim() : defaultDate;
   const category = (tx.category as TransactionCategory) || 'Others';
   const amount = Number(tx.amount) || 0;
   const account = tx.account || null;
@@ -271,7 +278,15 @@ export async function updateTransaction(
   }
 ): Promise<Transaction | null> {
   const title = tx.title ?? tx.name ?? null;
-  const transactionDate = tx.transactionDate ?? tx.date ?? null;
+  const rawDate = tx.transactionDate ?? tx.date ?? null;
+  const transactionDate =
+    rawDate && rawDate.trim().toLowerCase() === 'today'
+      ? new Date().toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      : rawDate;
   const isApproved = tx.is_approved !== undefined ? Boolean(tx.is_approved) : null;
   const hasProjectId = tx.projectId !== undefined;
   const projectId = tx.projectId !== undefined && tx.projectId !== null ? Number(tx.projectId) : null;

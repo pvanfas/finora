@@ -20,10 +20,32 @@ const getTodayDateInput = () => {
   return `${year}-${month}-${day}`;
 };
 
-const formatDisplayDate = (isoDate: string) => {
-  if (!isoDate) return "Today";
+const formatDisplayDate = (isoDate?: string) => {
+  if (!isoDate) {
+    const now = new Date();
+    return now.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
   const [y, m, d] = isoDate.split("-").map(Number);
-  if (!y || !m || !d) return isoDate;
+  if (!y || !m || !d) {
+    const parsed = new Date(isoDate);
+    if (!isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+    const now = new Date();
+    return now.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
   const dateObj = new Date(y, m - 1, d);
   return dateObj.toLocaleDateString("en-US", {
     month: "short",

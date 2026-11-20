@@ -65,12 +65,21 @@ export async function POST(request: Request) {
       (body.entered_by as string) ||
       'Admin';
 
+    const now = new Date();
+    const defaultDate = now.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const rawDate = (body.transactionDate as string) || (body.date as string);
+    const txDate = rawDate && rawDate.trim().toLowerCase() !== 'today' ? rawDate.trim() : defaultDate;
+
     const newTx = await addTransaction({
       name: title,
       title,
       category: (body.category as string) || 'Others',
-      date: (body.transactionDate as string) || (body.date as string) || 'Today',
-      transactionDate: (body.transactionDate as string) || (body.date as string) || 'Today',
+      date: txDate,
+      transactionDate: txDate,
       amount,
       account: body.account as string | undefined,
       paymentMethod: (body.paymentMethod as string) || 'Bank Transfer',
