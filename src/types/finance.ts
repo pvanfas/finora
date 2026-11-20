@@ -50,6 +50,7 @@ export interface Transaction {
   projectId?: number | null;
   projectName?: string | null;
   paidBy?: string | null;
+  enteredBy?: string | null;
 }
 
 export interface BudgetCategory {

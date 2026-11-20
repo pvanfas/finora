@@ -57,6 +57,14 @@ export async function POST(request: Request) {
       );
     }
 
+    const loggedInUser = sessionRes?.data?.user;
+    const enteredBy =
+      loggedInUser?.name ||
+      loggedInUser?.email ||
+      (body.enteredBy as string) ||
+      (body.entered_by as string) ||
+      'Admin';
+
     const newTx = await addTransaction({
       name: title,
       title,
@@ -71,6 +79,7 @@ export async function POST(request: Request) {
       projectId: body.projectId !== undefined && body.projectId !== null ? Number(body.projectId) : undefined,
       projectName: body.projectName !== undefined && body.projectName !== null ? String(body.projectName).trim() : undefined,
       paidBy: (body.paidBy as string) || (body.paid_by as string) || undefined,
+      enteredBy,
     });
 
     try {
@@ -144,6 +153,10 @@ export async function PUT(request: Request) {
 
     if (updates.paid_by !== undefined && updates.paidBy === undefined) {
       updates.paidBy = updates.paid_by;
+    }
+
+    if (updates.entered_by !== undefined && updates.enteredBy === undefined) {
+      updates.enteredBy = updates.entered_by;
     }
 
     const updated = await updateTransaction(id, updates as Parameters<typeof updateTransaction>[1]);

@@ -709,9 +709,48 @@ export function TransactionDetailModal({
                 </div>
               </div>
 
+              {/* Entered By */}
+              <div
+                style={{
+                  padding: '10px 12px',
+                  backgroundColor: '#F9FAFB',
+                  borderRadius: '10px',
+                  border: '1px solid #F3F4F6',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: '#6B7280',
+                    marginBottom: '4px',
+                  }}
+                >
+                  <User size={13} color="#9CA3AF" />
+                  <span>ENTERED BY</span>
+                </div>
+                <div
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#111827',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title={transaction.enteredBy || 'Admin'}
+                >
+                  👤 {transaction.enteredBy || 'Admin'}
+                </div>
+              </div>
+
               {/* Transaction ID */}
               <div
                 style={{
+                  gridColumn: 'span 2',
                   padding: '10px 12px',
                   backgroundColor: '#F9FAFB',
                   borderRadius: '10px',

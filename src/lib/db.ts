@@ -167,7 +167,7 @@ export async function getSettings() {
 
 export async function getTransactions(): Promise<Transaction[]> {
   const rows = await withRetry((sql) => sql`
-    SELECT id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, project_id, project_name, paid_by
+    SELECT id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, project_id, project_name, paid_by, entered_by
     FROM transactions
     ORDER BY created_at DESC;
   `);
@@ -187,6 +187,7 @@ export async function getTransactions(): Promise<Transaction[]> {
     projectId: r.project_id !== null && r.project_id !== undefined ? Number(r.project_id) : undefined,
     projectName: r.project_name || undefined,
     paidBy: r.paid_by || undefined,
+    enteredBy: r.entered_by || 'Admin',
   }));
 }
 
@@ -205,6 +206,7 @@ export async function addTransaction(tx: {
   projectId?: number | null;
   projectName?: string | null;
   paidBy?: string | null;
+  enteredBy?: string | null;
 }): Promise<Transaction> {
   const id = tx.id || `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   const title = tx.title || tx.name || 'Expense';
@@ -218,10 +220,11 @@ export async function addTransaction(tx: {
   const projectId = tx.projectId !== undefined && tx.projectId !== null ? Number(tx.projectId) : null;
   const projectName = tx.projectName ? String(tx.projectName).trim() : null;
   const paidBy = tx.paidBy ? String(tx.paidBy).trim() : null;
+  const enteredBy = tx.enteredBy ? String(tx.enteredBy).trim() : 'Admin';
 
   await withRetry((sql) => sql`
-    INSERT INTO transactions (id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, project_id, project_name, paid_by, created_at)
-    VALUES (${id}, ${title}, ${category}, ${amount}, ${transactionDate}, ${account}, ${paymentMethod}, ${remarks}, ${isApproved}, ${projectId}, ${projectName}, ${paidBy}, NOW());
+    INSERT INTO transactions (id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, project_id, project_name, paid_by, entered_by, created_at)
+    VALUES (${id}, ${title}, ${category}, ${amount}, ${transactionDate}, ${account}, ${paymentMethod}, ${remarks}, ${isApproved}, ${projectId}, ${projectName}, ${paidBy}, ${enteredBy}, NOW());
   `);
 
   return {
@@ -239,6 +242,7 @@ export async function addTransaction(tx: {
     projectId: projectId || undefined,
     projectName: projectName || undefined,
     paidBy: paidBy || undefined,
+    enteredBy: enteredBy || 'Admin',
   };
 }
 
@@ -263,6 +267,7 @@ export async function updateTransaction(
     projectId?: number | null;
     projectName?: string | null;
     paidBy?: string | null;
+    enteredBy?: string | null;
   }
 ): Promise<Transaction | null> {
   const title = tx.title ?? tx.name ?? null;
@@ -274,6 +279,8 @@ export async function updateTransaction(
   const projectName = tx.projectName !== undefined && tx.projectName !== null ? String(tx.projectName).trim() : null;
   const hasPaidBy = tx.paidBy !== undefined;
   const paidBy = tx.paidBy !== undefined && tx.paidBy !== null ? String(tx.paidBy).trim() : null;
+  const hasEnteredBy = tx.enteredBy !== undefined;
+  const enteredBy = tx.enteredBy !== undefined && tx.enteredBy !== null ? String(tx.enteredBy).trim() : null;
 
   const rows = await withRetry((sql) => sql`
     UPDATE transactions
@@ -288,9 +295,10 @@ export async function updateTransaction(
       is_approved = COALESCE(${isApproved}, is_approved),
       project_id = ${hasProjectId ? projectId : sql`project_id`},
       project_name = ${hasProjectName ? projectName : sql`project_name`},
-      paid_by = ${hasPaidBy ? paidBy : sql`paid_by`}
+      paid_by = ${hasPaidBy ? paidBy : sql`paid_by`},
+      entered_by = ${hasEnteredBy ? enteredBy : sql`entered_by`}
     WHERE id = ${id}
-    RETURNING id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, project_id, project_name, paid_by;
+    RETURNING id, title, category, amount, transaction_date, account, payment_method, remarks, is_approved, project_id, project_name, paid_by, entered_by;
   `);
 
   if (rows.length === 0) return null;
@@ -310,6 +318,7 @@ export async function updateTransaction(
     projectId: r.project_id !== null && r.project_id !== undefined ? Number(r.project_id) : undefined,
     projectName: r.project_name || undefined,
     paidBy: r.paid_by || undefined,
+    enteredBy: r.entered_by || 'Admin',
   };
 }
 
