@@ -71,7 +71,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         disabled={disabled || isLoading}
-        className={cn('inline-flex items-center justify-center font-semibold cursor-pointer transition-all duration-150 select-none disabled:opacity-50 disabled:cursor-not-allowed', className)}
+        className={cn('inline-flex items-center justify-center font-semibold cursor-pointer transition-all duration-150 select-none disabled:opacity-50 disabled:cursor-not-allowed ui-btn', className)}
         style={{
           display: fullWidth ? 'flex' : 'inline-flex',
           width: fullWidth ? '100%' : undefined,

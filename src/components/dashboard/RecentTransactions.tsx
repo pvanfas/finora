@@ -285,6 +285,7 @@ export function RecentTransactions({
       <div className="card-header-responsive">
         <div>
           <h2
+            className="section-card-title"
             style={{
               fontSize: "17px",
               fontWeight: 700,
@@ -300,7 +301,7 @@ export function RecentTransactions({
                 : "Recent Transactions"}
           </h2>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            <p style={{ fontSize: "13.5px", color: "#6B7280", margin: 0 }}>
+            <p className="section-card-desc" style={{ fontSize: "13.5px", color: "#6B7280", margin: 0 }}>
               {searchQuery.trim() !== ""
                 ? `Showing ${totalItems} results matching "${searchQuery}".`
                 : isIncomePage
@@ -1008,6 +1009,7 @@ export function RecentTransactions({
                 {renderTransactionIcon(tx)}
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div
+                    className="mobile-tx-name"
                     style={{
                       fontSize: "14px",
                       fontWeight: 700,
@@ -1020,6 +1022,7 @@ export function RecentTransactions({
                     {tx.name}
                   </div>
                   <div
+                    className="mobile-tx-meta"
                     style={{
                       fontSize: "12px",
                       color: "#6B7280",
@@ -1107,6 +1110,7 @@ export function RecentTransactions({
 
               <div style={{ textAlign: "right", flexShrink: 0 }}>
                 <div
+                  className="mobile-tx-amount"
                   style={{
                     fontSize: "14.5px",
                     fontWeight: 700,

@@ -237,6 +237,7 @@ export function AccountsManager() {
       >
         <div>
           <h2
+            className="section-card-title"
             style={{
               fontSize: '18px',
               fontWeight: 800,
@@ -247,7 +248,7 @@ export function AccountsManager() {
           >
             Chart of Accounts Directory
           </h2>
-          <p style={{ fontSize: '13px', color: '#6B7280', margin: 0 }}>
+          <p className="section-card-desc" style={{ fontSize: '13px', color: '#6B7280', margin: 0 }}>
             Configure and manage operational Expense Accounts and Income Accounts
           </p>
         </div>

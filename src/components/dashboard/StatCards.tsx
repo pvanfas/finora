@@ -109,6 +109,7 @@ export function StatCards() {
                 <Icon size={17} strokeWidth={2} />
               </div>
               <span
+                className="stat-card-title"
                 style={{
                   fontSize: '14px',
                   fontWeight: 600,
@@ -122,6 +123,7 @@ export function StatCards() {
 
             {/* Value + Subtext */}
             <div
+              className="stat-card-value-container"
               style={{
                 marginTop: '14px',
                 marginBottom: '16px',
@@ -132,6 +134,7 @@ export function StatCards() {
               }}
             >
               <span
+                className="stat-card-value"
                 style={{
                   fontSize: '28px',
                   fontWeight: 700,
@@ -142,7 +145,7 @@ export function StatCards() {
               >
                 {stat.value}
               </span>
-              <span style={{ fontSize: '13px', fontWeight: 400, color: '#6B7280' }}>
+              <span className="stat-card-subtext" style={{ fontSize: '13px', fontWeight: 400, color: '#6B7280' }}>
                 {stat.subtext}
               </span>
             </div>

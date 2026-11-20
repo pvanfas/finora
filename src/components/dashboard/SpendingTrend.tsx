@@ -445,6 +445,7 @@ export function SpendingTrend({
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <h2
+              className="section-card-title"
               style={{
                 fontSize: "17px",
                 fontWeight: 700,
@@ -461,6 +462,7 @@ export function SpendingTrend({
             </h2>
           </div>
           <p
+            className="section-card-desc"
             style={{
               fontSize: "12.5px",
               color: "#6B7280",

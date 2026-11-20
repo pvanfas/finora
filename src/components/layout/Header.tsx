@@ -76,6 +76,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
           />
           <input
             type="text"
+            className="header-search-input"
             placeholder="Search anything..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

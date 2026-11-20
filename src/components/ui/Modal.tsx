@@ -98,11 +98,11 @@ export function Modal({
           }}
         >
           <div>
-            <h3 id="modal-title" style={{ fontSize: '18px', fontWeight: 700, color: '#111827' }}>
+            <h3 id="modal-title" className="modal-title-responsive" style={{ fontSize: '18px', fontWeight: 700, color: '#111827' }}>
               {title}
             </h3>
             {description && (
-              <p style={{ fontSize: '13px', color: '#6B7280', marginTop: '2px' }}>{description}</p>
+              <p className="modal-desc-responsive" style={{ fontSize: '13px', color: '#6B7280', marginTop: '2px' }}>{description}</p>
             )}
           </div>
           <button

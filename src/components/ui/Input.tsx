@@ -15,6 +15,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <div style={{ width: '100%', marginBottom: label ? '16px' : 0 }}>
         {label && (
           <label
+            className="ui-input-label"
             style={{
               display: 'block',
               fontSize: '13px',
@@ -43,7 +44,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
           <input
             ref={ref}
-            className={cn('w-full border rounded-xl outline-none transition-all', className)}
+            className={cn('w-full border rounded-xl outline-none transition-all ui-input-field', className)}
             style={{
               width: '100%',
               padding: leftIcon ? '11px 14px 11px 42px' : '11px 14px',

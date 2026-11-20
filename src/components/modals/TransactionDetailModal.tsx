@@ -362,6 +362,7 @@ export function TransactionDetailModal({
               }}
             >
               <div
+                className="detail-modal-amount-label"
                 style={{
                   fontSize: '11px',
                   fontWeight: 600,
@@ -374,6 +375,7 @@ export function TransactionDetailModal({
                 {isExpense ? 'Total Debit Amount' : 'Total Credit Amount'}
               </div>
               <div
+                className="detail-modal-amount-value"
                 style={{
                   fontSize: '24px',
                   fontWeight: 800,
@@ -400,6 +402,7 @@ export function TransactionDetailModal({
                 Description / Memo
               </div>
               <div
+                className="detail-modal-memo"
                 style={{
                   fontSize: '14.5px',
                   fontWeight: 700,

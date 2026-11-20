@@ -289,7 +289,7 @@ export function ProjectsManager() {
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#111827', letterSpacing: '-0.01em' }}>
+                <h2 className="projects-title-responsive" style={{ fontSize: '18px', fontWeight: 800, color: '#111827', letterSpacing: '-0.01em' }}>
                   Projects Directory
                 </h2>
                 <span
@@ -305,7 +305,7 @@ export function ProjectsManager() {
                   {projects.length} Total
                 </span>
               </div>
-              <p style={{ fontSize: '13px', color: '#6B7280', marginTop: '2px' }}>
+              <p className="projects-desc-responsive" style={{ fontSize: '13px', color: '#6B7280', marginTop: '2px' }}>
                 Create, organize, and manage client and internal project names
               </p>
             </div>
@@ -823,7 +823,7 @@ export function ProjectsManager() {
                           <Layers size={16} />
                         </div>
                         <div>
-                          <div style={{ fontSize: '14.5px', fontWeight: 700, color: '#111827' }}>
+                          <div className="project-card-name" style={{ fontSize: '14.5px', fontWeight: 700, color: '#111827' }}>
                             {project.name}
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>

@@ -181,6 +181,7 @@ export function SpendingBreakdown() {
       >
         <div>
           <h2
+            className="section-card-title"
             style={{
               fontSize: '17px',
               fontWeight: 700,
@@ -191,7 +192,7 @@ export function SpendingBreakdown() {
           >
             Spending Breakdown
           </h2>
-          <p style={{ fontSize: '13.5px', color: '#6B7280' }}>See where your money goes.</p>
+          <p className="section-card-desc" style={{ fontSize: '13.5px', color: '#6B7280' }}>See where your money goes.</p>
         </div>
 
         {/* Action controls */}
@@ -355,6 +356,7 @@ export function SpendingBreakdown() {
             }}
           >
             <div
+              className="breakdown-center-value"
               style={{
                 fontSize: hoveredSegment ? '30px' : '26px',
                 fontWeight: 800,
@@ -368,6 +370,7 @@ export function SpendingBreakdown() {
                 : formatINR(totalSpent)}
             </div>
             <div
+              className="breakdown-center-label"
               style={{
                 fontSize: '13px',
                 color: '#6B7280',
