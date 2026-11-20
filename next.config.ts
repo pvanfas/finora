@@ -33,6 +33,9 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
   },
+  experimental: {
+    agentUpgrade: "security",
+  },
   async headers() {
     return [
       {
