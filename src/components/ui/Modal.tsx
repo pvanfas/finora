@@ -51,6 +51,7 @@ export function Modal({
   return (
     <div
       onClick={handleBackdropClick}
+      className="modal-backdrop-container"
       style={{
         position: 'fixed',
         inset: 0,
@@ -68,7 +69,7 @@ export function Modal({
     >
       <div
         ref={modalRef}
-        className={cn('animate-slide-down', className)}
+        className={cn('animate-slide-down modal-dialog-responsive', className)}
         style={{
           backgroundColor: '#FFFFFF',
           borderRadius: '20px',
@@ -86,6 +87,7 @@ export function Modal({
       >
         {/* Modal Header */}
         <div
+          className="modal-header-responsive"
           style={{
             padding: '20px 24px',
             borderBottom: '1px solid #ECEEF2',

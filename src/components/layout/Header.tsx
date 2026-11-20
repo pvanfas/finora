@@ -120,7 +120,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
         <Button
           onClick={() => openAddTransaction('income')}
           leftIcon={<ArrowDownRight size={15} strokeWidth={2.5} />}
-          className="header-action-btn"
+          className="header-action-btn header-cash-in-btn"
           aria-label="Cash In"
           style={{
             backgroundColor: '#10B981',
@@ -137,7 +137,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
         <Button
           onClick={() => openAddTransaction('expense')}
           leftIcon={<ArrowUpRight size={15} strokeWidth={2.5} />}
-          className="header-action-btn"
+          className="header-action-btn header-cash-out-btn"
           aria-label="Cash Out"
           style={{
             backgroundColor: '#DC2626',
@@ -154,7 +154,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
           variant="outline"
           onClick={() => setIsCustomizeOpen(true)}
           leftIcon={<LayoutGrid size={16} strokeWidth={2} />}
-          className="header-action-btn"
+          className="header-action-btn header-customize-btn"
           aria-label="Customize"
         >
           <span className="header-btn-text">Customize</span>

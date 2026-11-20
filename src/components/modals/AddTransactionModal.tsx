@@ -231,7 +231,7 @@ export function AddTransactionModal() {
       maxWidth="480px"
       isStatic={true}
     >
-      <form onSubmit={handleSubmit} style={{ padding: "24px" }}>
+      <form onSubmit={handleSubmit} className="modal-form-responsive" style={{ padding: "24px" }}>
         {/* Toggle Type */}
         <div
           style={{
@@ -252,10 +252,11 @@ export function AddTransactionModal() {
               alignItems: "center",
               justifyContent: "center",
               gap: "6px",
-              padding: "9px 12px",
+              padding: "9px 8px",
               borderRadius: "9px",
-              fontSize: "13px",
+              fontSize: "12.5px",
               fontWeight: 700,
+              whiteSpace: "nowrap",
               border: "none",
               cursor: "pointer",
               transition: "all 0.15s ease",
@@ -281,10 +282,11 @@ export function AddTransactionModal() {
               alignItems: "center",
               justifyContent: "center",
               gap: "6px",
-              padding: "9px 12px",
+              padding: "9px 8px",
               borderRadius: "9px",
-              fontSize: "13px",
+              fontSize: "12.5px",
               fontWeight: 700,
+              whiteSpace: "nowrap",
               border: "none",
               cursor: "pointer",
               transition: "all 0.15s ease",
@@ -476,6 +478,7 @@ export function AddTransactionModal() {
         />
 
         <div
+          className="modal-grid-stack-mobile"
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 1fr",

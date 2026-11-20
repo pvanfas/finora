@@ -260,6 +260,7 @@ export function ProjectsManager() {
       >
         {/* Header Strip */}
         <div
+          className="projects-header-strip"
           style={{
             padding: '24px 28px',
             borderBottom: '1px solid #F3F4F6',
@@ -310,9 +311,10 @@ export function ProjectsManager() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <div className="projects-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             {/* Search Input */}
             <div
+              className="projects-search-box"
               style={{
                 position: 'relative',
                 display: 'flex',
@@ -379,7 +381,7 @@ export function ProjectsManager() {
             </div>
 
             {/* Add Project Button */}
-            <Button onClick={openCreateModal}>
+            <Button onClick={openCreateModal} className="projects-new-btn">
               <Plus size={16} style={{ marginRight: '6px' }} />
               <span>New Project</span>
             </Button>
@@ -1232,6 +1234,28 @@ export function ProjectsManager() {
           }
           .card-list-mobile {
             display: flex !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .projects-header-strip {
+            padding: 16px 16px !important;
+          }
+          .projects-header-actions {
+            width: 100% !important;
+            gap: 10px !important;
+          }
+          .projects-search-box {
+            width: 100% !important;
+            min-width: 0 !important;
+          }
+          .projects-new-btn {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+        }
+        @media (max-width: 380px) {
+          .projects-header-strip {
+            padding: 12px 12px !important;
           }
         }
       `}</style>

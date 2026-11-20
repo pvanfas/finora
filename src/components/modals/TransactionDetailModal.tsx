@@ -165,7 +165,7 @@ export function TransactionDetailModal({
       maxWidth="500px"
       isStatic={true}
     >
-      <div style={{ padding: '16px 20px' }}>
+      <div className="modal-form-responsive" style={{ padding: '16px 20px' }}>
         {/* Subheader Toolbar with Edit & Delete Buttons */}
         <div
           style={{
@@ -173,6 +173,8 @@ export function TransactionDetailModal({
             alignItems: 'center',
             justifyContent: 'space-between',
             marginBottom: '14px',
+            flexWrap: 'wrap',
+            gap: '8px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -405,6 +407,7 @@ export function TransactionDetailModal({
 
             {/* Key-Value Details Grid */}
             <div
+              className="modal-details-grid-responsive"
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(2, 1fr)',
@@ -464,7 +467,7 @@ export function TransactionDetailModal({
                   <ShieldCheck size={13} color={transaction.is_approved ? '#16A34A' : '#D97706'} />
                   <span>APPROVAL STATUS</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', flexWrap: 'wrap' }}>
                   <div style={{ fontSize: '13px', fontWeight: 700, color: transaction.is_approved ? '#16A34A' : '#D97706' }}>
                     {transaction.is_approved ? 'Approved' : 'Pending Approval'}
                   </div>
@@ -483,6 +486,7 @@ export function TransactionDetailModal({
                         fontWeight: 600,
                         cursor: 'pointer',
                         boxShadow: '0 1px 2px rgba(22, 163, 74, 0.2)',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {isApproving ? '...' : 'Approve Now'}
@@ -877,7 +881,7 @@ export function TransactionDetailModal({
                 required
               />
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="modal-grid-stack-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <Input
                   label="Amount (INR)"
                   type="number"
